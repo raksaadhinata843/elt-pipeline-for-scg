@@ -1,0 +1,61 @@
+import os
+import json
+import logging
+import boto3
+import requests
+from datetime import datetime, timezone
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+FRED_BASE_URL = "https://api.stlouisfed.org/fred/series/observations"
+SERIES_ID     = "PCU327327327327"  # PPI: Cement & Concrete Products
+
+
+def fetch_cement_price(api_key: str, start_date: str | None, end_date: str | None) -> dict:
+    params = {
+        "api_key":       api_key,
+        "series_id":     SERIES_ID,
+        "file_type":     "json",
+        "sort_order":    "asc",
+    }
+
+    if start_date:
+        params["observation_start"] = start_date
+    if end_date:
+        params["observation_end"] = end_date
+
+    response = requests.get(FRED_BASE_URL, params=params, timeout=30)
+    response.raise_for_status()
+
+    return response.json()
+
+
+def lambda_handler(event: dict, context) -> dict:
+    api_key = os.environ["FRED_API_KEY"]
+    bucket  = os.environ["S3_BUCKET"]
+    prefix  = os.environ.get("S3_PREFIX", "raw/cement_price")
+
+    start_date = os.environ.get("START_DATE")
+    end_date   = os.environ.get("END_DATE")
+
+    logger.info(f"Fetching FRED Cement Price | {start_date or 'full'} → {end_date or 'full'}")
+
+    raw = fetch_cement_price(api_key, start_date, end_date)
+
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    s3_key    = f"{prefix}/{timestamp}.json"
+
+    boto3.client("s3").put_object(
+        Bucket      = bucket,
+        Key         = s3_key,
+        Body        = json.dumps(raw).encode("utf-8"),
+        ContentType = "application/json",
+    )
+
+    logger.info(f"Uploaded to s3://{bucket}/{s3_key}")
+
+    return {
+        "statusCode": 200,
+        "s3_uri":     f"s3://{bucket}/{s3_key}",
+      }

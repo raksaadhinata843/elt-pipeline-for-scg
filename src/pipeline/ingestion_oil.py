@@ -61,7 +61,7 @@ def lambda_handler(event, context):
     now    = datetime.now(timezone.utc)
     s3_key = f"{prefix}/year={now.year}/month={now.month:02d}/day={now.day:02d}/brent_{frequency}_{now.strftime('%Y%m%dT%H%M%SZ')}.json"
 
-    boto3.client("s3").put_object(Bucket=bucket, Key=s3_key, Body=json.dumps(raw).encode(), ContentType="application/json")
+    boto3.client("s3").put_object(Bucket=bucket, Key=s3_key, Body=json.dumps(raw).encode("utf-8"), ContentType="application/json")
 
     logger.info(f"Dumped {len(raw)} raw records to s3://{bucket}/{s3_key}")
     return {"statusCode": 200, "records": len(raw), "s3_key": s3_key}

@@ -35,7 +35,7 @@ def lambda_handler(event: dict, context) -> dict:
     bucket  = os.environ["S3_BUCKET"]
     prefix  = os.environ.get("S3_PREFIX", "bronze/energy/coal")
 
-    today      = datetime.now(timezone.utc).date()
+    now      = datetime.now(timezone.utc).date()
     start_date = os.environ.get("START_DATE", (today - timedelta(days=30)).isoformat())
     end_date   = os.environ.get("END_DATE", today.isoformat())
 
@@ -44,7 +44,6 @@ def lambda_handler(event: dict, context) -> dict:
     raw = fetch_coal_newcastle(api_key, start_date, end_date)
 
     # Dump raw response as-is ke S3
-    now = datetime.now(timezone.utc)
     timestamp = now.strftime("%Y%m%dT%H%M%SZ")
 
     s3_key = (
@@ -68,6 +67,7 @@ def lambda_handler(event: dict, context) -> dict:
         "statusCode": 200,
         "s3_uri":     f"s3://{bucket}/{s3_key}",
 }
+
 
 
 

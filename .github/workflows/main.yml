@@ -5,10 +5,10 @@ on:
     branches:
       - main
     paths:
-      - "ingestion_coal.py"
-      - "ingestion_cement.py"
-      - "ingestion_oil.py"
-      - ".github/workflows/scg-main.yml"
+      - "src/pipeline/ingestion_coal.py"
+      - "src/pipeline/ingestion_cement.py"
+      - "src/pipeline/ingestion_oil.py"
+      - "src/.github/workflows/main.yml"
 
 
   workflow_dispatch:

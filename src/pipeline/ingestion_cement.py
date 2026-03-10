@@ -33,7 +33,7 @@ def fetch_cement_price(api_key: str, start_date: str | None, end_date: str | Non
 def lambda_handler(event: dict, context) -> dict:
     api_key = os.environ["FRED_API_KEY"]
     bucket  = os.environ["S3_BUCKET"]
-    prefix  = os.environ.get("S3_PREFIX", "raw/cement_price")
+    prefix  = os.environ.get("S3_PREFIX", "bronze/construction/cement")
 
     start_date = os.environ.get("START_DATE")
     end_date   = os.environ.get("END_DATE")

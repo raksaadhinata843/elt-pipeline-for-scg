@@ -26,9 +26,8 @@ jobs:
         run: |
           mkdir package
           python -m pip install --upgrade pip
-          pip install boto3 duckdb motherduck
-          pip install duckdb requests -t package/
-          cp src/lambda_ingest/handler.py package/handler.py
+          pip install -r src/pipeline/requirements.txt -t package/
+          cp -r src/pipeline/* package/
           cd package
           zip -r ../deployment_package.zip . 
 
@@ -38,7 +37,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} 
-          aws-region: us-east-1
+          aws-region: ${{ secrets.get.AWS_REGION }}
 
       # Step 5 - verify credentials
       - name: Verify AWS credentials
@@ -50,17 +49,6 @@ jobs:
           aws lambda update-function-code \
             --function-name lambda_ingest \
             --zip-file fileb://deployment_package.zip
-
-      # Step 7 - invoke lambda
-      - name: Trigger Ingestion
-        run: |
-          aws lambda invoke \
-            --function-name lambda_ingest \
-            --payload '{}' \
-            response.json
-          cat response.json
-            
-      
 
       # Step 9 — load data to MotherDuck
       - name: Load to MotherDuck

@@ -50,7 +50,8 @@ def lambda_handler(event: dict, context) -> dict:
         f"year={now.year}/"
         f"month={now.month:02d}/"
         f"{timestamp}.json"
-)
+    )
+
     boto3.client("s3").put_object(
         Bucket      = bucket,
         Key         = s3_key,
@@ -64,4 +65,5 @@ def lambda_handler(event: dict, context) -> dict:
         "statusCode": 200,
         "s3_uri":     f"s3://{bucket}/{s3_key}",
 }
+
 

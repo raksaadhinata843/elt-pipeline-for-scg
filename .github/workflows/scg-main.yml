@@ -8,7 +8,7 @@ on:
       - "ingestion_coal.py"
       - "ingestion_cement.py"
       - "ingestion_oil.py"
-      - ".github/workflows/main.yml"
+      - ".github/workflows/scg-main.yml"
 
 
   workflow_dispatch:

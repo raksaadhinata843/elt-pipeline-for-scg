@@ -8,7 +8,7 @@ on:
       - "src/pipeline/ingestion_coal.py"
       - "src/pipeline/ingestion_cement.py"
       - "src/pipeline/ingestion_oil.py"
-      - "src/.github/workflows/main.yml"
+      - ".github/workflows/main.yml"
 
 
   workflow_dispatch:

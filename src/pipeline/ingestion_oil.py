@@ -52,7 +52,7 @@ def lambda_handler(event, context):
 
     now      = datetime.now(timezone.utc).date()
     end_date   = today.isoformat()
-    start_date = None if full_load else (today - timedelta(days=int(os.environ.get("LOOKBACK_DAYS", "30")))).isoformat()
+    start_date = None if full_load else (now - timedelta(days=int(os.environ.get("LOOKBACK_DAYS", "30")))).isoformat()
 
     logger.info(f"Starting ingestion | full_load={full_load} start={start_date} end={end_date}")
 

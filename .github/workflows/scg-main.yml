@@ -47,7 +47,9 @@ jobs:
       - name: Update Lambda Code
         run: |
           aws lambda update-function-code \
-            --function-name lambda_ingest \
+            --function-name lambda_ingestion \
+            --function-name lambda_handler \
+            --function-name lambda_fetch \
             --zip-file fileb://deployment_package.zip
 
       # Step 9 — load data to MotherDuck

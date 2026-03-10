@@ -12,7 +12,7 @@ logger.setLevel(logging.INFO)
 EIA_URL = "https://api.eia.gov/v2/petroleum/pri/spt/data/"
 
 
-def fetch_eia(api_key, frequency, start_date, end_date, offset=0, length=5000):
+def fetch_oil_brent(api_key, frequency, start_date, end_date, offset=0, length=5000):
     params = {
         "api_key":            api_key,
         "frequency":          frequency,

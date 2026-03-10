@@ -42,12 +42,13 @@ def lambda_handler(event: dict, context) -> dict:
 
     raw = fetch_cement_price(api_key, start_date, end_date)
 
-    now = datetime.now(timezone.utc)
+    timestamp = now.strftime("%Y%m%dT%H%M%SZ")
 
     s3_key = (
         f"{prefix}/"
         f"year={now.year}/"
         f"month={now.month:02d}/"
+        f"day={now.day:02d}/"
         f"{timestamp}.json"
     )
     

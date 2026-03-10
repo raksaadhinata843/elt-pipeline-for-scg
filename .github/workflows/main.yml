@@ -1,0 +1,157 @@
+name: Deploy Ingestion Lambdas
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "ingestion_coal.py"
+      - "ingestion_cement.py"
+      - "ingestion_oil.py"
+      - ".github/workflows/main.yml"
+
+
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Lambda to deploy (all / coal / cement / oil)"
+        required: false
+        default: "all"
+
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+
+# ────────────────────────────────────────────────────────────────
+jobs:
+
+# ── 1. BUILD ─────────────────────────────────────────────────────
+  build:
+    name: Build packages
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        commodity:
+          - name: coal
+            file: ingestion_coal.py
+          - name: cement
+            file: ingestion_cement.py
+          - name: oil
+            file: ingestion_oil.py
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install --quiet --target ./package boto3 requests
+
+      - name: Package Lambda ZIP
+        run: |
+          cp ${{ matrix.commodity.file }} ./package/
+          cd package
+          zip -r9 ../${{ matrix.commodity.name }}.zip . -x "*.pyc" -x "__pycache__/*"
+          cd ..
+          echo "ZIP size: $(du -sh ${{ matrix.commodity.name }}.zip)"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-${{ matrix.commodity.name }}
+          path: ${{ matrix.commodity.name }}.zip
+          retention-days: 3
+
+# ── 3. DEPLOY ────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to AWS Lambda
+    needs: build
+    runs-on: ubuntu-latest
+    if: success()
+    environment: production
+
+    strategy:
+      max-parallel: 1
+      matrix:
+        include:
+          - commodity: coal
+            lambda_name: ingestion-coal
+            handler: ingestion_coal.lambda_handler
+            env_vars: >-
+              EIA_API_KEY=${{ secrets.EIA_API_KEY }},
+              S3_BUCKET=${{ secrets.S3_BUCKET }},
+              S3_PREFIX=bronze/energy/coal,
+              LOOKBACK_DAYS=30
+
+          - commodity: cement
+            lambda_name: ingestion-cement
+            handler: ingestion_cement.lambda_handler
+            env_vars: >-
+              FRED_API_KEY=${{ secrets.FRED_API_KEY }},
+              S3_BUCKET=${{ secrets.S3_BUCKET }},
+              S3_PREFIX=bronze/construction/cement
+
+          - commodity: oil
+            lambda_name: ingestion-oil
+            handler: ingestion_oil.lambda_handler
+            env_vars: >-
+              EIA_API_KEY=${{ secrets.EIA_API_KEY }},
+              S3_BUCKET=${{ secrets.S3_BUCKET }},
+              S3_PREFIX=bronze/energy/brent,
+              EIA_FREQUENCY=daily,
+              LOOKBACK_DAYS=30,
+              FULL_LOAD=false
+
+    steps:
+      - name: Skip if not targeted
+        if: >
+          github.event.inputs.target != 'all' &&
+          github.event.inputs.target != matrix.commodity &&
+          github.event_name == 'workflow_dispatch'
+        run: echo "Skipping ${{ matrix.commodity }} (not targeted)" && exit 0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-${{ matrix.commodity }}
+
+      - name: Update Lambda code
+        run: |
+          aws lambda update-function-code \
+            --function-name "${{ matrix.lambda_name }}" \
+            --zip-file fileb://${{ matrix.commodity }}.zip \
+            --no-cli-pager
+
+          aws lambda wait function-updated \
+            --function-name "${{ matrix.lambda_name }}"
+
+      - name: Update Lambda config & env vars
+        run: |
+          aws lambda update-function-configuration \
+            --function-name "${{ matrix.lambda_name }}" \
+            --handler "${{ matrix.handler }}" \
+            --runtime python3.12 \
+            --environment "Variables={${{ matrix.env_vars }}}" \
+            --timeout 300 \
+            --memory-size 256 \
+            --no-cli-pager
+
+      - name: Verify deployment
+        run: |
+          STATE=$(aws lambda get-function \
+            --function-name "${{ matrix.lambda_name }}" \
+            --query 'Configuration.State' \
+            --output text)
+          echo "Lambda state: $STATE"
+          [ "$STATE" = "Active" ] || exit 1
+

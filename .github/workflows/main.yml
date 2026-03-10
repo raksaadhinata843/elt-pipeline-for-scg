@@ -1,156 +1,178 @@
-name: Deploy Ingestion Lambdas
+name: ELT Pipeline
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "src/pipeline/ingestion_coal.py"
-      - "src/pipeline/ingestion_cement.py"
-      - "src/pipeline/ingestion_oil.py"
-      - ".github/workflows/main.yml"
-
-
   workflow_dispatch:
     inputs:
       target:
-        description: "Lambda to deploy (all / coal / cement / oil)"
+        description: "coal / cement / oil / all"
         required: false
         default: "all"
 
-
-env:
-  AWS_REGION: ${{ secrets.AWS_REGION }}
-
-# ────────────────────────────────────────────────────────────────
 jobs:
-
-# ── 1. BUILD ─────────────────────────────────────────────────────
-  build:
-    name: Build packages
+  deploy-coal:
+    if: github.event.inputs.target == 'coal' || github.event.inputs.target == 'all'
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        commodity:
-          - name: coal
-            file: ingestion_coal.py
-          - name: cement
-            file: ingestion_cement.py
-          - name: oil
-            file: ingestion_oil.py
-
+    permissions:
+      id-token: write
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
+      - name: Package Lambda
         run: |
-          pip install --quiet --target ./package boto3 requests
-
-      - name: Package Lambda ZIP
-        run: |
-          cp ${{ matrix.commodity.file }} ./package/
-          cd package
-          zip -r9 ../${{ matrix.commodity.name }}.zip . -x "*.pyc" -x "__pycache__/*"
-          cd ..
-          echo "ZIP size: $(du -sh ${{ matrix.commodity.name }}.zip)"
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: lambda-${{ matrix.commodity.name }}
-          path: ${{ matrix.commodity.name }}.zip
-          retention-days: 3
-
-# ── 3. DEPLOY ────────────────────────────────────────────────────
-  deploy:
-    name: Deploy to AWS Lambda
-    needs: build
-    runs-on: ubuntu-latest
-    if: success()
-
-    strategy:
-      max-parallel: 1
-      matrix:
-        include:
-          - commodity: coal
-            lambda_name: ingestion-coal
-            handler: ingestion_coal.lambda_handler
-            env_vars: >-
-              EIA_API_KEY=${{ secrets.EIA_API_KEY }},
-              S3_BUCKET=${{ secrets.S3_BUCKET }},
-              S3_PREFIX=bronze/energy/coal,
-              LOOKBACK_DAYS=30
-
-          - commodity: cement
-            lambda_name: ingestion-cement
-            handler: ingestion_cement.lambda_handler
-            env_vars: >-
-              FRED_API_KEY=${{ secrets.FRED_API_KEY }},
-              S3_BUCKET=${{ secrets.S3_BUCKET }},
-              S3_PREFIX=bronze/construction/cement
-
-          - commodity: oil
-            lambda_name: ingestion-oil
-            handler: ingestion_oil.lambda_handler
-            env_vars: >-
-              EIA_API_KEY=${{ secrets.EIA_API_KEY }},
-              S3_BUCKET=${{ secrets.S3_BUCKET }},
-              S3_PREFIX=bronze/energy/brent,
-              EIA_FREQUENCY=daily,
-              LOOKBACK_DAYS=30,
-              FULL_LOAD=false
-
-    steps:
-      - name: Skip if not targeted
-        if: >
-          github.event.inputs.target != 'all' &&
-          github.event.inputs.target != matrix.commodity &&
-          github.event_name == 'workflow_dispatch'
-        run: echo "Skipping ${{ matrix.commodity }} (not targeted)" && exit 0
+          mkdir package
+          pip install boto3 requests -t package/
+          cp src/pipeline/ingestion_coal.py package/
+          cd package && zip -r ../coal.zip .
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region:            ${{ env.AWS_REGION }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: lambda-${{ matrix.commodity }}
+      - name: Verify AWS credentials
+        run: aws sts get-caller-identity
 
       - name: Update Lambda code
         run: |
           aws lambda update-function-code \
-            --function-name "${{ matrix.lambda_name }}" \
-            --zip-file fileb://${{ matrix.commodity }}.zip \
-            --no-cli-pager
+            --function-name ingestion-coal \
+            --zip-file fileb://coal.zip --no-cli-pager
+          aws lambda wait function-updated --function-name ingestion-coal
 
-          aws lambda wait function-updated \
-            --function-name "${{ matrix.lambda_name }}"
-
-      - name: Update Lambda config & env vars
+      - name: Update Lambda config
         run: |
           aws lambda update-function-configuration \
-            --function-name "${{ matrix.lambda_name }}" \
-            --handler "${{ matrix.handler }}" \
+            --function-name ingestion-coal \
+            --handler ingestion_coal.lambda_handler \
             --runtime python3.12 \
-            --environment "Variables={${{ matrix.env_vars }}}" \
-            --timeout 300 \
-            --memory-size 256 \
+            --timeout 300 --memory-size 256 \
+            --environment "Variables={EIA_API_KEY=${{ secrets.EIA_API_KEY }},S3_BUCKET=${{ secrets.S3_BUCKET }},S3_PREFIX=bronze/energy/coal,LOOKBACK_DAYS=30}" \
             --no-cli-pager
 
-      - name: Verify deployment
+      - name: Invoke Lambda
         run: |
-          STATE=$(aws lambda get-function \
-            --function-name "${{ matrix.lambda_name }}" \
-            --query 'Configuration.State' \
-            --output text)
-          echo "Lambda state: $STATE"
-          [ "$STATE" = "Active" ] || exit 1
+          aws lambda invoke \
+            --function-name ingestion-coal \
+            --payload '{}' response.json
+          cat response.json
 
+  deploy-cement:
+    if: github.event.inputs.target == 'cement' || github.event.inputs.target == 'all'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Package Lambda
+        run: |
+          mkdir package
+          pip install boto3 requests -t package/
+          cp src/pipeline/ingestion_cement.py package/
+          cd package && zip -r ../cement.zip .
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Verify AWS credentials
+        run: aws sts get-caller-identity
+
+      - name: Update Lambda code
+        run: |
+          aws lambda update-function-code \
+            --function-name ingestion-cement \
+            --zip-file fileb://cement.zip --no-cli-pager
+          aws lambda wait function-updated --function-name ingestion-cement
+
+      - name: Update Lambda config
+        run: |
+          aws lambda update-function-configuration \
+            --function-name ingestion-cement \
+            --handler ingestion_cement.lambda_handler \
+            --runtime python3.12 \
+            --timeout 300 --memory-size 256 \
+            --environment "Variables={FRED_API_KEY=${{ secrets.FRED_API_KEY }},S3_BUCKET=${{ secrets.S3_BUCKET }},S3_PREFIX=bronze/construction/cement}" \
+            --no-cli-pager
+
+      - name: Invoke Lambda
+        run: |
+          aws lambda invoke \
+            --function-name ingestion-cement \
+            --payload '{}' response.json
+          cat response.json
+
+  deploy-oil:
+    if: github.event.inputs.target == 'oil' || github.event.inputs.target == 'all'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Package Lambda
+        run: |
+          mkdir package
+          pip install boto3 requests -t package/
+          cp src/pipeline/ingestion_oil.py package/
+          cd package && zip -r ../oil.zip .
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Verify AWS credentials
+        run: aws sts get-caller-identity
+
+      - name: Update Lambda code
+        run: |
+          aws lambda update-function-code \
+            --function-name ingestion-oil \
+            --zip-file fileb://oil.zip --no-cli-pager
+          aws lambda wait function-updated --function-name ingestion-oil
+
+      - name: Update Lambda config
+        run: |
+          aws lambda update-function-configuration \
+            --function-name ingestion-oil \
+            --handler ingestion_oil.lambda_handler \
+            --runtime python3.12 \
+            --timeout 300 --memory-size 256 \
+            --environment "Variables={EIA_API_KEY=${{ secrets.EIA_API_KEY }},S3_BUCKET=${{ secrets.S3_BUCKET }},S3_PREFIX=bronze/energy/brent,EIA_FREQUENCY=daily,LOOKBACK_DAYS=30,FULL_LOAD=false}" \
+            --no-cli-pager
+
+      - name: Invoke Lambda
+        run: |
+          aws lambda invoke \
+            --function-name ingestion-oil \
+            --payload '{}' response.json
+          cat response.json

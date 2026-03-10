@@ -50,7 +50,7 @@ def lambda_handler(event, context):
     frequency = os.environ.get("EIA_FREQUENCY", "daily")
     full_load = os.environ.get("FULL_LOAD", "false").lower() == "true"
 
-    today      = datetime.now(timezone.utc).date()
+    now      = datetime.now(timezone.utc).date()
     end_date   = today.isoformat()
     start_date = None if full_load else (today - timedelta(days=int(os.environ.get("LOOKBACK_DAYS", "30")))).isoformat()
 

@@ -9,8 +9,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 FRED_BASE_URL = "https://api.stlouisfed.org/fred/series/observations"
-SERIES_ID     = "PCU327327327327"  # PPI: Cement & Concrete Products
-
+SERIES_ID     = "PCU32733273"  
 
 def fetch_cement_price(api_key: str, start_date: str | None, end_date: str | None) -> dict:
     params = {

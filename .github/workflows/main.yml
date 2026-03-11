@@ -55,7 +55,7 @@ jobs:
             --handler ingestion_coal.lambda_handler \
             --runtime python3.12 \
             --timeout 300 --memory-size 256 \
-            --environment "Variables={EIA_API_KEY=${{ secrets.EIA_API_KEY }},S3_BUCKET=${{ secrets.S3_BUCKET }},S3_PREFIX=bronze/energy/coal,LOOKBACK_DAYS=30}" \
+            --environment "Variables={FRED_API_KEY=${{ secrets.FRED_API_KEY }},S3_BUCKET=${{ secrets.S3_BUCKET }},S3_PREFIX=bronze/energy/coal,LOOKBACK_DAYS=30}" \
             --no-cli-pager
 
       - name: Invoke Lambda

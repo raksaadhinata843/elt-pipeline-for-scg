@@ -36,8 +36,7 @@ def lambda_handler(event: dict, context) -> dict:
 
     now        = datetime.now(timezone.utc).date()
     end_date   = now.isoformat()
-    start_date = None if full_load else (now - timedelta(days=int(os.environ.get("START_DATE", "30")))).isoformat()
-
+    start_date = os.environ.get("START_DATE", "30").isoformat()
     logger.info(f"Fetching Coal Newcastle | {start_date} → {end_date}")
 
     raw = fetch_coal_newcastle(api_key, start_date, end_date)
@@ -71,6 +70,7 @@ def lambda_handler(event: dict, context) -> dict:
         "statusCode": 200,
         "s3_uri":     f"s3://{bucket}/{s3_key}",
 }
+
 
 
 

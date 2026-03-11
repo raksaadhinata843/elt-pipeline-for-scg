@@ -56,7 +56,7 @@ def lambda_handler(event, context):
 
     logger.info(f"Starting ingestion | full_load={full_load} start={start_date} end={end_date}")
 
-    raw = fetch_eia(api_key, frequency, start_date, end_date)
+    raw = fetch_oil_brent(api_key, frequency, start_date, end_date)
 
     timestamp = now.strftime("%Y%m%dT%H%M%SZ")
 

@@ -48,7 +48,7 @@ def lambda_handler(event, context):
     bucket    = os.environ["S3_BUCKET"]
     prefix    = os.environ.get("S3_PREFIX", "bronze/energy/brent")
     frequency = os.environ.get("EIA_FREQUENCY", "daily")
-    full_load = os.environ.get("FULL_LOAD", "false").lower() == "true"
+    full_load = os.environ.get("FULL_LOAD", True)
 
     now        = datetime.now(timezone.utc).date()
     end_date   = now.isoformat()

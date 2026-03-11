@@ -38,9 +38,15 @@ def lambda_handler(event: dict, context) -> dict:
 
     now        = datetime.now(timezone.utc).date()
     end_date   = now.isoformat()
-    start_date = os.environ.get("START_DATE", "30")
+    raw_start = event.get("start_date") or os.environ.get("START_DATE", "30")
+
+    if "-" in str(raw_start): 
+        start_date = raw_start
+    else:
+        days_to_lookback = int(raw_start)
+        start_date = (now - timedelta(days=days_to_lookback)).strftime("%Y-%m-%d")
     
-    logger.info(f"Fetching FRED Cement Price | {start_date or 'full'} → {end_date or 'full'}")
+    logger.info(f"Fetching FRED Cement Price | {start_date} → {end_date}")
     
     raw = fetch_cement_price(api_key, start_date, end_date)
     

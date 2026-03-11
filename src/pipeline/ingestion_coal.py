@@ -43,6 +43,11 @@ def lambda_handler(event: dict, context) -> dict:
 
     raw = fetch_coal_newcastle(api_key, start_date, end_date)
 
+    raw["observations"] = [
+        obs for obs in raw["observations"] 
+        if obs["value"] != "."
+    ]
+
     # Dump raw response as-is ke S3
     timestamp = now.strftime("%Y%m%dT%H%M%SZ")
 
@@ -67,6 +72,7 @@ def lambda_handler(event: dict, context) -> dict:
         "statusCode": 200,
         "s3_uri":     f"s3://{bucket}/{s3_key}",
 }
+
 
 
 

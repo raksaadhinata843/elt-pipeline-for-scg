@@ -32,9 +32,9 @@ def lambda_handler(event: dict, context) -> dict:
     bucket  = os.environ["S3_BUCKET"]
     prefix  = os.environ.get("S3_PREFIX", "bronze/energy/coal")
 
-    now      = datetime.now(timezone.utc).date()
-    start_date = os.environ.get("START_DATE", (now - timedelta(days=30)).isoformat())
-    end_date   = os.environ.get("END_DATE", now.isoformat())
+    now        = datetime.now(timezone.utc).date()
+    end_date   = now.isoformat()
+    start_date = None if full_load else (now - timedelta(days=int(os.environ.get("LOOKBACK_DAYS", "30")))).isoformat()
 
     logger.info(f"Fetching Coal Newcastle | {start_date} → {end_date}")
 
@@ -69,6 +69,7 @@ def lambda_handler(event: dict, context) -> dict:
         "statusCode": 200,
         "s3_uri":     f"s3://{bucket}/{s3_key}",
 }
+
 
 
 

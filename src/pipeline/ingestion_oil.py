@@ -51,7 +51,7 @@ def lambda_handler(event, context):
     full_load = os.environ.get("FULL_LOAD", True)
 
     start_date = "2010-01-01" 
-    now        = datetime.now(timezone.utc).date()
+    now        = datetime.now(timezone.utc)
     end_date   = now.isoformat()
 
     logger.info(f"Starting ingestion | full_load={full_load} start={start_date} end={end_date}")

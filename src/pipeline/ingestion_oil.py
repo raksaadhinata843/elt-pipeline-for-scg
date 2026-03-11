@@ -33,8 +33,8 @@ def fetch_oil_brent(api_key, frequency, start_date, end_date, offset=0, length=5
 
     payload = resp.json()
     data    = payload["response"]["data"]
-    total   = payload["response"]["total"]
-
+    total   = int(payload["response"]["total"])
+    
     logger.info(f"Fetched {len(data)} records (offset={offset}, total={total})")
 
     if offset + length < total:

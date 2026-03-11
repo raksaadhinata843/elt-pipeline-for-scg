@@ -32,7 +32,7 @@ def lambda_handler(event: dict, context) -> dict:
     bucket  = os.environ["S3_BUCKET"]
     prefix  = os.environ.get("S3_PREFIX", "bronze/energy/coal")
 
-    full_load = event.get("full_load", False)
+    full_load = event.get("full_load", True)
 
     now        = datetime.now(timezone.utc).date()
     end_date   = now.isoformat()
@@ -77,6 +77,7 @@ def lambda_handler(event: dict, context) -> dict:
         "statusCode": 200,
         "s3_uri":     f"s3://{bucket}/{s3_key}",
 }
+
 
 
 

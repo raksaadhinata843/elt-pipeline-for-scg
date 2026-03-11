@@ -50,15 +50,9 @@ def lambda_handler(event, context):
     frequency = os.environ.get("EIA_FREQUENCY", "daily")
     full_load = os.environ.get("FULL_LOAD", True)
 
+    start_date = "2010-01-01" 
     now        = datetime.now(timezone.utc).date()
     end_date   = now.isoformat()
-    raw_start  = os.environ.get("START_DATE", "30")
-    
-    if "-" in str(raw_start): 
-        start_date = raw_start
-    else:
-        days_to_lookback = int(raw_start)
-        start_date = (now - timedelta(days=days_to_lookback)).strftime("%Y-%m-%d")
 
     logger.info(f"Starting ingestion | full_load={full_load} start={start_date} end={end_date}")
 

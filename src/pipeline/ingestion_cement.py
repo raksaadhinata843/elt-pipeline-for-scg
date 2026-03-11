@@ -3,7 +3,7 @@ import json
 import logging
 import boto3
 import requests
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -36,15 +36,8 @@ def lambda_handler(event: dict, context) -> dict:
     prefix  = os.environ.get("S3_PREFIX", "bronze/construction/cement")
     full_load = event.get("full_load", True)
 
-    now        = datetime.now(timezone.utc).date()
-    end_date   = now.isoformat()
-    raw_start  = os.environ.get("START_DATE", "30")
-
-    if "-" in str(raw_start): 
-        start_date = raw_start
-    else:
-        days_to_lookback = int(raw_start)
-        start_date = (now - timedelta(days=days_to_lookback)).strftime("%Y-%m-%d")
+    start_date = "2010-01-01" 
+    end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
     logger.info(f"Fetching FRED Cement Price | {start_date} → {end_date}")
     

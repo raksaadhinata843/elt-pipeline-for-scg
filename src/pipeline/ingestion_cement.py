@@ -34,6 +34,7 @@ def lambda_handler(event: dict, context) -> dict:
     api_key = os.environ["FRED_API_KEY"]
     bucket  = os.environ["S3_BUCKET"]
     prefix  = os.environ.get("S3_PREFIX", "bronze/construction/cement")
+    full_load = event.get("full_load", False)
 
     now        = datetime.now(timezone.utc).date()
     end_date   = now.isoformat()

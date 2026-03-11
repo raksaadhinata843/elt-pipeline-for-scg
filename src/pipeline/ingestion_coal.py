@@ -36,7 +36,7 @@ def lambda_handler(event: dict, context) -> dict:
 
     now        = datetime.now(timezone.utc).date()
     end_date   = now.isoformat()
-    raw_start = os.environ.get("START_DATE", "30")
+    raw_start  = os.environ.get("START_DATE", "30")
 
     if "-" in str(raw_start): 
         start_date = raw_start
@@ -77,6 +77,7 @@ def lambda_handler(event: dict, context) -> dict:
         "statusCode": 200,
         "s3_uri":     f"s3://{bucket}/{s3_key}",
 }
+
 
 
 

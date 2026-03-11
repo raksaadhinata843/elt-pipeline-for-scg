@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-EIA_BASE_URL = "https://api.eia.gov/v2/coal/spot-price/data/"
+EIA_BASE_URL = "https://api.stlouisfed.org/fred/series/observations?series_id=PCOALAUUSDM&api_key=&file_type=json&sort_order=asc"
 
 
 def fetch_coal_newcastle(api_key: str, start_date: str = None, end_date: str = None) -> dict:
@@ -72,6 +72,7 @@ def lambda_handler(event: dict, context) -> dict:
         "statusCode": 200,
         "s3_uri":     f"s3://{bucket}/{s3_key}",
 }
+
 
 
 

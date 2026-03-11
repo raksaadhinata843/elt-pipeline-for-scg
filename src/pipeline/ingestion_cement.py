@@ -37,7 +37,7 @@ def lambda_handler(event: dict, context) -> dict:
     full_load = event.get("full_load", True)
 
     start_date = "2010-01-01" 
-    now        = datetime.now(timezone.utc).date()
+    now        = datetime.now(timezone.utc)
     end_date   = now.isoformat()
     
     logger.info(f"Fetching FRED Cement Price | {start_date} → {end_date}")

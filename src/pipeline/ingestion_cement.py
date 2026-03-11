@@ -35,8 +35,11 @@ def lambda_handler(event: dict, context) -> dict:
     bucket  = os.environ["S3_BUCKET"]
     prefix  = os.environ.get("S3_PREFIX", "bronze/construction/cement")
 
-    start_date = os.environ.get("START_DATE")
+    start_date = os.environ.get("START_DATE", "LOOK_BACK"=30 days) 
     end_date   = os.environ.get("END_DATE")
+
+    if not end_date:
+        end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     logger.info(f"Fetching FRED Cement Price | {start_date or 'full'} → {end_date or 'full'}")
 

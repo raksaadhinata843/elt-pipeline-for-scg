@@ -1,7 +1,7 @@
 import os
-import json
 import logging
-import boto3
+import pandas as pd
+import awswrangler as wr
 import requests
 from datetime import datetime, timedelta, timezone
 
@@ -34,14 +34,15 @@ def lambda_handler(event: dict, context) -> dict:
 
     full_load = event.get("full_load", True)
 
-    start_date = "2010-01-01" 
-    now        = datetime.now(timezone.utc)
-    end_date   = now.isoformat()
+    now = datetime.now(timezone.utc)
+    raw = fetch_coal_newcastle(api_key, "2010-01-01", now.isoformat())
     
     logger.info(f"Fetching Coal Newcastle | {start_date} → {end_date}")
 
-    raw = fetch_coal_newcastle(api_key, start_date, end_date)
-
+    df = pd.DataFrame(raw["observations"])
+    df["value"] = pd.to_numeric(df["value"], errors='coerce')
+    df["date"] = pd.to_datetime(df["date"])
+ 
     raw["observations"] = [
         obs for obs in raw["observations"] 
         if obs["value"] != "."
@@ -50,13 +51,11 @@ def lambda_handler(event: dict, context) -> dict:
     # Dump raw response as-is ke S3
     timestamp = now.strftime("%Y%m%dT%H%M%SZ")
 
-    s3_key = (
-        f"{prefix}/"
-        f"year={now.year}/"
-        f"month={now.month:02d}/"
-        f"day={now.day:02d}/"
-        f"{timestamp}.json"
-    )
+   s3_key = (
+        f"s3://{bucket}/{prefix}/"
+        f"year={now.year}/month={now.month:02d}/day={now.day:02d}/"
+        f"{timestamp}.parquet"
+   )
 
  wr.s3.to_parquet(
         df=df,
@@ -69,6 +68,7 @@ def lambda_handler(event: dict, context) -> dict:
         "statusCode": 200,
         "s3_uri":     f"s3://{bucket}/{s3_key}",
 }
+
 
 
 

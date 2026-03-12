@@ -1,8 +1,8 @@
 import os
-import json
 import logging
-import boto3
 import requests
+import pandas as pd
+import awswrangler as wr
 from datetime import datetime, timezone
 
 logger = logging.getLogger()
@@ -36,13 +36,14 @@ def lambda_handler(event: dict, context) -> dict:
     prefix  = os.environ.get("S3_PREFIX", "bronze/construction/cement")
     full_load = event.get("full_load", True)
 
-    start_date = "2010-01-01" 
-    now        = datetime.now(timezone.utc)
-    end_date   = now.isoformat()
+    now = datetime.now(timezone.utc)
+    raw = fetch_cement_price(api_key, "2010-01-01", now.isoformat())
+
+    df = pd.DataFrame(raw["observations"])
+    df["value"] = pd.to_numeric(df["value"], errors='coerce')
+    df["date"] = pd.to_datetime(df["date"])
     
     logger.info(f"Fetching FRED Cement Price | {start_date} → {end_date}")
-    
-    raw = fetch_cement_price(api_key, start_date, end_date)
     
     timestamp  = now.strftime("%Y%m%dT%H%M%SZ")
     
@@ -54,13 +55,12 @@ def lambda_handler(event: dict, context) -> dict:
         f"{timestamp}.json"
     )
     
-    boto3.client("s3").put_object(
-        Bucket      = bucket,
-        Key         = s3_key,
-        Body        = json.dumps(raw).encode("utf-8"),
-        ContentType = "application/json",
+    wr.s3.to_parquet(
+        df=df,
+        key=s3_key,
+        index=False
     )
-
+    
     logger.info(f"Uploaded to s3://{bucket}/{s3_key}")
 
     return {

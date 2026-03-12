@@ -37,7 +37,7 @@ def lambda_handler(event: dict, context) -> dict:
     now = datetime.now(timezone.utc)
     raw = fetch_coal_newcastle(api_key, "2010-01-01", now.isoformat())
     
-    logger.info(f"Fetching Coal Newcastle | {start_date} → {end_date}")
+    logger.info(f"Fetching Coal Newcastle")
 
     df = pd.DataFrame(raw["observations"])
     df["value"] = pd.to_numeric(df["value"], errors='coerce')
@@ -69,6 +69,7 @@ def lambda_handler(event: dict, context) -> dict:
         "statusCode": 200,
         "s3_uri":     f"s3://{bucket}/{s3_key}",
     }
+
 
 
 

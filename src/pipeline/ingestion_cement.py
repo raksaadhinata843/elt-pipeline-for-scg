@@ -48,11 +48,9 @@ def lambda_handler(event: dict, context) -> dict:
     timestamp  = now.strftime("%Y%m%dT%H%M%SZ")
     
     s3_key = (
-        f"{prefix}/"
-        f"year={now.year}/"
-        f"month={now.month:02d}/"
-        f"day={now.day:02d}/"
-        f"{timestamp}.json"
+        f"s3://{bucket}/{prefix}/"
+        f"year={now.year}/month={now.month:02d}/day={now.day:02d}/"
+        f"{timestamp}.parquet"
     )
     
     wr.s3.to_parquet(

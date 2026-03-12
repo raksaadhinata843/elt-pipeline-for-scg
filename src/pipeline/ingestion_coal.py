@@ -58,19 +58,18 @@ def lambda_handler(event: dict, context) -> dict:
         f"{timestamp}.json"
     )
 
-    boto3.client("s3").put_object(
-        Bucket      = bucket,
-        Key         = s3_key,
-        Body        = json.dumps(raw).encode("utf-8"),
-        ContentType = "application/json",
+ wr.s3.to_parquet(
+        df=df,
+        key=s3_key,
+        index=False
     )
-
     logger.info(f"Uploaded to s3://{bucket}/{s3_key}")
 
     return {
         "statusCode": 200,
         "s3_uri":     f"s3://{bucket}/{s3_key}",
 }
+
 
 
 

@@ -38,7 +38,7 @@ def lambda_handler(event: dict, context) -> dict:
     df["value"] = pd.to_numeric(df["value"], errors='coerce')
     df["date"] = pd.to_datetime(df["date"])
     
-    logger.info(f"Fetching FRED Cement Price | {start_date} → {end_date}")
+    logger.info(f"Fetching FRED Cement Price")
     
     timestamp  = now.strftime("%Y%m%dT%H%M%SZ")
     

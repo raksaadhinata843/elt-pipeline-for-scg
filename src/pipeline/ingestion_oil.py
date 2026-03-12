@@ -23,10 +23,6 @@ def fetch_oil_brent(api_key, frequency, start_date, end_date, offset=0, length=5
         "offset":             offset,
         "length":             length,
     }
-    if start_date:
-        params["start"] = start_date
-    if end_date:
-        params["end"] = end_date
 
     resp = requests.get(EIA_URL, params=params, timeout=30)
     resp.raise_for_status()

@@ -51,23 +51,25 @@ def lambda_handler(event: dict, context) -> dict:
     # Dump raw response as-is ke S3
     timestamp = now.strftime("%Y%m%dT%H%M%SZ")
 
-   s3_key = (
+    s3_key = (
         f"s3://{bucket}/{prefix}/"
         f"year={now.year}/month={now.month:02d}/day={now.day:02d}/"
         f"{timestamp}.parquet"
-   )
+    )
 
- wr.s3.to_parquet(
+    wr.s3.to_parquet(
         df=df,
         key=s3_key,
         index=False
     )
+    
     logger.info(f"Uploaded to s3://{bucket}/{s3_key}")
 
     return {
         "statusCode": 200,
         "s3_uri":     f"s3://{bucket}/{s3_key}",
-}
+    }
+
 
 
 

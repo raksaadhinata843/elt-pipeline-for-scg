@@ -53,7 +53,7 @@ def lambda_handler(event, context):
     df["value"] = pd.to_numeric(df["value"], errors='coerce')
     df["date"] = pd.to_datetime(df["date"])
 
-    logger.info(f"Starting ingestion | full_load={full_load} start={start_date} end={end_date}")
+    logger.info(f"Starting ingestion | full_load={full_load}")
 
     timestamp = now.strftime("%Y%m%dT%H%M%SZ")
 

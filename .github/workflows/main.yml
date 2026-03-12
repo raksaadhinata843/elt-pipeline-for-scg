@@ -28,7 +28,7 @@ jobs:
         run: |
           mkdir python
           pip install -r requirements.txt -t python/
-          cp src/pipeline
+          cp src/pipeline/requirements.txt .
 
       - name: Package Lambda
         run: |

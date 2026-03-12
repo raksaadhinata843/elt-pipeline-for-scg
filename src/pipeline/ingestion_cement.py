@@ -19,11 +19,6 @@ def fetch_cement_price(api_key: str, start_date: str | None, end_date: str | Non
         "sort_order":    "asc",
     }
 
-    if start_date:
-        params["observation_start"] = start_date
-    if end_date:
-        params["observation_end"] = end_date
-
     response = requests.get(FRED_BASE_URL, params=params, timeout=30)
     response.raise_for_status()
 

@@ -1,8 +1,8 @@
 import os
 import io
-import json
 import logging
-import boto3
+import pandas as pd
+import awswrangler as wr
 import requests
 from datetime import datetime, timedelta, timezone
 
@@ -50,25 +50,28 @@ def lambda_handler(event, context):
     frequency = os.environ.get("EIA_FREQUENCY", "daily")
     full_load = os.environ.get("FULL_LOAD", True)
 
-    start_date = "2010-01-01" 
-    now        = datetime.now(timezone.utc)
-    end_date   = now.isoformat()
+    now = datetime.now(timezone.utc)
+    raw = fetch_oil_brent(api_key, "2010-01-01", now.isoformat())
+
+    df = pd.DataFrame(raw["observations"])
+    df["value"] = pd.to_numeric(df["value"], errors='coerce')
+    df["date"] = pd.to_datetime(df["date"])
 
     logger.info(f"Starting ingestion | full_load={full_load} start={start_date} end={end_date}")
-
-    raw = fetch_oil_brent(api_key, frequency, start_date, end_date)
 
     timestamp = now.strftime("%Y%m%dT%H%M%SZ")
 
     s3_key = (
-        f"{prefix}/"
-        f"year={now.year}/"
-        f"month={now.month:02d}/"
-        f"day={now.day:02d}/"
-        f"{timestamp}.json"
+        f"s3://{bucket}/{prefix}/"
+        f"year={now.year}/month={now.month:02d}/day={now.day:02d}/"
+        f"{timestamp}.parquet"
     )
     
-    boto3.client("s3").put_object(Bucket=bucket, Key=s3_key, Body=json.dumps(raw).encode("utf-8"), ContentType="application/json")
-
+    wr.s3.to_parquet(
+        df=df,
+        path=s3_key,
+        index=False
+    )
+    
     logger.info(f"Dumped {len(raw)} raw records to s3://{bucket}/{s3_key}")
     return {"statusCode": 200, "records": len(raw), "s3_key": s3_key}

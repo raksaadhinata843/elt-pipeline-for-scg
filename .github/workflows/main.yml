@@ -24,6 +24,12 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install dependencies
+        run: |
+          mkdir python
+          pip install -r requirements.txt -t python/
+          cp src/pipeline
+
       - name: Package Lambda
         run: |
           mkdir package

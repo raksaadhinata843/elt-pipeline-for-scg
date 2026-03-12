@@ -33,7 +33,7 @@ jobs:
       - name: Package Lambda
         run: |
           mkdir package
-          pip install -r src/pipeline/requirements.txt -t python/
+          pip install -r src/pipeline/requirements.txt -t package/
           cp src/pipeline/ingestion_coal.py package/
           cd package && zip -r ../coal.zip .
 
@@ -89,7 +89,7 @@ jobs:
       - name: Package Lambda
         run: |
           mkdir package
-          ppip install -r src/pipeline/requirements.txt -t python/
+          pip install -r src/pipeline/requirements.txt -t package/
           cp src/pipeline/ingestion_cement.py package/
           cd package && zip -r ../cement.zip .
 
@@ -145,7 +145,7 @@ jobs:
       - name: Package Lambda
         run: |
           mkdir package
-          pip install -r src/pipeline/requirements.txt -t python/
+          pip install -r src/pipeline/requirements.txt -t package/
           cp src/pipeline/ingestion_oil.py package/
           cd package && zip -r ../oil.zip .
 

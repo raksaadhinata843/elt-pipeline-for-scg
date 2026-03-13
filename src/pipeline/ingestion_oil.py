@@ -48,8 +48,8 @@ def lambda_handler(event, context):
     frequency = os.environ.get("EIA_FREQUENCY", "daily")
     full_load = os.environ.get("FULL_LOAD", True)
 
-    now = datetime.now(timezone.utc)
-    raw = fetch_oil_brent(api_key, frequency, "2010-01-01", now.strftime("%Y-%m-%d"))
+    now = now.strftime("%Y-%m-%d"))
+    raw = fetch_oil_brent(api_key, frequency, "2010-01-01", now)
     if not raw:
         print("API returned empty response")
         return {"statusCode": 200, "body": "No data returned from API"}

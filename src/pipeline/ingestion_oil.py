@@ -49,7 +49,7 @@ def lambda_handler(event, context):
     now = datetime.now(timezone.utc)
     raw = fetch_oil_brent(api_key, frequency, "2010-01-01", now.strftime("%Y-%m-%d"))
 
-    df = pd.DataFrame(raw["observations"])
+    df = pd.DataFrame(raw[0]["observations"])
     df["value"] = pd.to_numeric(df["value"], errors='coerce')
     df["date"] = pd.to_datetime(df["date"])
 

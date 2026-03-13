@@ -48,6 +48,10 @@ def lambda_handler(event, context):
 
     now = datetime.now(timezone.utc)
     raw = fetch_oil_brent(api_key, frequency, "2010-01-01", now.strftime("%Y-%m-%d"))
+    if not raw:
+        print("API returned empty response")
+        return {"statusCode": 200, "body": "No data returned from API"}
+
 
     df = pd.DataFrame(raw[0]["observations"])
     df["value"] = pd.to_numeric(df["value"], errors='coerce')

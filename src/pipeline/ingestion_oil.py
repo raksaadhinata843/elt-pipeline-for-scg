@@ -14,11 +14,13 @@ EIA_URL = "https://api.eia.gov/v2/petroleum/pri/spt/data/"
 
 def fetch_oil_brent(api_key, frequency, start_date, end_date, offset=0, length=5000):
     params = {
-        "api_key":            api_key,
-        "frequency":          frequency,
-        "data[0]":            "value",
-        "facets[series][]":   "EPCBRENT",
-        "sort[0][column]":    "period",
+        "api_key"      :      api_key,
+        "frequency"    :      frequency,
+        "start_date"   :      "2010-01-01",
+        "end_date"     :      "end_date",
+        "data[0]"      :      "value",
+        "facets[series][]"  : "EPCBRENT",
+        "sort[0][column]"   : "period",
         "sort[0][direction]": "asc",
         "offset":             offset,
         "length":             length,
@@ -34,7 +36,7 @@ def fetch_oil_brent(api_key, frequency, start_date, end_date, offset=0, length=5
     logger.info(f"Fetched {len(data)} records (offset={offset}, total={total})")
 
     if offset + length < total:
-        data += fetch_eia(api_key, frequency, start_date, end_date, offset + length, length)
+        data += fetch_oil_brent(api_key, frequency, start_date, end_date, offset + length, length)
 
     return data
 
@@ -55,7 +57,7 @@ def lambda_handler(event, context):
 
     df = pd.DataFrame(raw[0]["observations"])
     df["value"] = pd.to_numeric(df["value"], errors='coerce')
-    df["date"] = pd.to_datetime(df["date"])
+    df["date"] = pd.to_datetime(df["period"])
 
     logger.info(f"Starting ingestion | full_load={full_load}")
 

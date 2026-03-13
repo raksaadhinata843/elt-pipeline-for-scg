@@ -47,7 +47,7 @@ def lambda_handler(event, context):
     full_load = os.environ.get("FULL_LOAD", True)
 
     now = datetime.now(timezone.utc)
-    raw = fetch_oil_brent(api_key, "2010-01-01", now.isoformat())
+    raw = fetch_oil_brent(api_key, "2010-01-01", now.strftime("%Y-%m-%d"))
 
     df = pd.DataFrame(raw["observations"])
     df["value"] = pd.to_numeric(df["value"], errors='coerce')

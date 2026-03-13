@@ -69,7 +69,7 @@ def lambda_handler(event, context):
     
     wr.s3.to_parquet(
         df=df,
-        path=f"s3://{bucket}/{s3_key}",
+        path=s3_key,
         index=False
     )
     

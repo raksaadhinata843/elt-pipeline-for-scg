@@ -17,7 +17,7 @@ def fetch_oil_brent(api_key, frequency, start_date, end_date, offset=0, length=5
         "api_key"      :      api_key,
         "frequency"    :      frequency,
         "start_date"   :      "2010-01-01",
-        "end_date"     :      "end_date",
+        "end_date"     :      "now",
         "data[0]"      :      "value",
         "facets[series][]"  : "EPCBRENT",
         "sort[0][column]"   : "period",

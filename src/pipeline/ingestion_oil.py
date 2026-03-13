@@ -17,7 +17,7 @@ def fetch_oil_brent(api_key, frequency, start_date, end_date, offset=0, length=5
         "api_key"      :      api_key,
         "frequency"    :      frequency,
         "start_date"   :      "2010-01-01",
-        "end_date"     :      "now",
+        "end_date"     :      "end_date",
         "data[0]"      :      "value",
         "facets[series][]"  : "EPCBRENT",
         "sort[0][column]"   : "period",
@@ -51,7 +51,7 @@ def lambda_handler(event, context):
     now = datetime.now(timezone.utc)         
     end_date = now.strftime("%Y-%m-%d")
     
-    raw = fetch_oil_brent(api_key, frequency, "2010-01-01", now)
+    raw = fetch_oil_brent(api_key, frequency, "2010-01-01", end_date)
     if not raw:
         print("API returned empty response")
         return {"statusCode": 200, "body": "No data returned from API"}

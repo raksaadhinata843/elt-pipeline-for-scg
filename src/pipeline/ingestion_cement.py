@@ -32,7 +32,7 @@ def lambda_handler(event: dict, context) -> dict:
     full_load = event.get("full_load", True)
 
     now = datetime.now(timezone.utc)
-    raw = fetch_cement_price(api_key, "2010-01-01", now.isoformat())
+    raw = fetch_cement_price(api_key, "2010-01-01", now.strftime("%Y-%m-%d"))
 
     df = pd.DataFrame(raw["observations"])
     df["value"] = pd.to_numeric(df["value"], errors='coerce')

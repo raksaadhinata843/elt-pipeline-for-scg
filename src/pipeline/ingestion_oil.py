@@ -16,7 +16,7 @@ def fetch_oil_brent(api_key, frequency, start_date, end_date, offset=0, length=5
     params = {
         "api_key"      :      api_key,
         "frequency"    :      frequency,
-        "start"        :      "2010-01-01",
+        "start"        :      start_date,
         "end"          :      end_date,
         "data[0]"      :      "value",
         "facets[series][]"  : "EPCBRENT",
@@ -30,6 +30,8 @@ def fetch_oil_brent(api_key, frequency, start_date, end_date, offset=0, length=5
     resp.raise_for_status()
 
     payload = resp.json()
+    logger.info(f"Full API Response {payload}")    
+    
     data    = payload["response"]["data"]
     total   = int(payload["response"]["total"])
     
@@ -49,15 +51,16 @@ def lambda_handler(event, context):
     full_load = os.environ.get("FULL_LOAD", True)
 
     now = datetime.now(timezone.utc)         
+    start_date = 2010-01-01
     end_date = now.strftime("%Y-%m-%d")
     
-    raw = fetch_oil_brent(api_key, frequency, "2010-01-01", end_date)
+    raw = fetch_oil_brent(api_key, frequency, start_date, end_date)
     if not raw:
         print("API returned empty response")
         return {"statusCode": 200, "body": "No data returned from API"}
 
 
-    df = pd.DataFrame(raw[0]["observations"])
+    df = pd.DataFrame(raw)
     df["value"] = pd.to_numeric(df["value"], errors='coerce')
     df["date"] = pd.to_datetime(df["period"])
 

@@ -51,7 +51,7 @@ def lambda_handler(event, context):
     full_load = os.environ.get("FULL_LOAD", True)
 
     now = datetime.now(timezone.utc)         
-    start_date = 2010-01-01
+    start_date = "2010-01-01"
     end_date = now.strftime("%Y-%m-%d")
     
     raw = fetch_oil_brent(api_key, frequency, start_date, end_date)

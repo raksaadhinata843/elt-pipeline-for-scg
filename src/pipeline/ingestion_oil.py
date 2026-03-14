@@ -19,7 +19,7 @@ def fetch_oil_brent(api_key, frequency, start_date, end_date, offset=0, length=5
         "start"        :      start_date,
         "end"          :      end_date,
         "data[0]"      :      "value",
-        "facets[series][]"  : "EPCBRENT",
+        "facets[series][]"  : "RBRTE",
         "sort[0][column]"   : "period",
         "sort[0][direction]": "asc",
         "offset":             offset,

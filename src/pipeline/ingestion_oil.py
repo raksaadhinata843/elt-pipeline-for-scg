@@ -64,8 +64,6 @@ def lambda_handler(event, context):
     df["value"] = pd.to_numeric(df["value"], errors='coerce')
     df["date"] = pd.to_datetime(df["period"])
 
-    logger.info(f"Starting ingestion | full_load={full_load}")
-
     timestamp = now.strftime("%Y%m%dT%H%M%SZ")
 
     s3_key = (
@@ -79,6 +77,7 @@ def lambda_handler(event, context):
         path=s3_key,
         index=False
     )
+  
+    logger.info(f"Uploaded to {s3_key}")
     
-    logger.info(f"Dumped {len(raw)} raw records to s3://{bucket}/{s3_key}")
     return {"statusCode": 200, "records": len(raw), "s3_key": s3_key}

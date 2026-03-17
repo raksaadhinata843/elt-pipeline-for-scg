@@ -1,7 +1,7 @@
 INSERT INTO bronze_coal_price
     SELECT
-        CAST(date AS DATE) AS observation_date,
-        CAST(value AS DOUBLE) AS price
+        CAST(date AS DATE)            AS observation_date,
+        CAST(value AS DOUBLE)         AS price,
         CAST(realtime_start AS DATE)  AS realtime_start,
         CAST(realtime_end AS DATE)    AS realtime_end,
         CURRENT_TIMESTAMP             AS ingestion_timestamp

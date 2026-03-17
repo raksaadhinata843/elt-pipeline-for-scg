@@ -8,8 +8,8 @@ con = duckdb.connect(
     f"md:my_db?motherduck_token={token}"
 )
 
-ddl_dir = pathlib.Path("sql/ddl")
-transform_dir = pathlib.Path("sql/transform")
+ddl_dir = pathlib.Path("src/sql/ddl")
+transform_dir = pathlib.Path("src/sql/transform")
 
 # create tables
 for file in sorted(ddl_dir.glob("*.sql")):

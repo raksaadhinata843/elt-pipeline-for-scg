@@ -1,4 +1,4 @@
-MERGE INTO bronze_oil_price AS target
+MERGE INTO bronze_cement_price AS target
 USING (
 
 SELECT

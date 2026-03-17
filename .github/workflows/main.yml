@@ -116,6 +116,6 @@ jobs:
 
       - name: Run Bronze Transform
         env:
-          MOTHERDUCK_TOKEN: ${{ secrets.MD_TOKEN }}
+          MD_TOKEN: ${{ secrets.MD_TOKEN }}
         run: |
           python src/runner/run_bronze.py

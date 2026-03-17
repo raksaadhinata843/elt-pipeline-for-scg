@@ -111,7 +111,7 @@ jobs:
 
       - name: Install deps
         run: |
-          pip install duckdb
+          pip install duckdb==1.4.4
           pip install motherduck
 
       - name: Run Bronze Transform

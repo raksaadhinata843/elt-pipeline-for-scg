@@ -180,7 +180,7 @@ jobs:
       - name: Run Bronze Transform
         env:
           MOTHERDUCK_TOKEN: ${{ secrets.MD_TOKEN }}
-          S3_BUCKET: ${{ secrets.get.S3_BUCKET }}
+          S3_BUCKET: ${{ secrets.S3_BUCKET }}
         run: |
           python src/runner/run_bronze.py
       

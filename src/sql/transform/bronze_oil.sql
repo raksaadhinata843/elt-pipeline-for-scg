@@ -1,7 +1,7 @@
 INSERT INTO bronze_oil_price
     SELECT
-        CAST(date AS DATE) AS observation_date,
-        CAST(value AS DOUBLE) AS price
+        CAST(date AS DATE)        AS observation_date,
+        CAST(value AS DOUBLE)     AS price,
         units,
         series,
         CURRENT_TIMESTAMP         AS ingestion_timestamp

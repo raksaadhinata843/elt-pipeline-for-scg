@@ -176,3 +176,11 @@ jobs:
             --function-name ingestion-oil \
             --payload '{}' response.json
           cat response.json
+
+      - name: Run Bronze Transform
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MD_TOKEN }}
+          S3_BUCKET: ${{ secrets.get.S3_BUCKET }}
+        run: |
+          python src/runner/run_bronze.py
+      

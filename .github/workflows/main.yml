@@ -16,25 +16,29 @@ jobs:
     strategy:
       matrix:
         include:
-          - dataset: coal
-            lambda: ingestion-coal
-            script: ingestion_coal.py
-            prefix: bronze/energy/coal
-            api_key: FRED_API_KEY
 
-          - dataset: cement
-            lambda: ingestion-cement
-            script: ingestion_cement.py
-            prefix: bronze/construction/cement
-            api_key: FRED_API_KEY
+        - dataset: coal
+          lambda: ingestion-coal
+          script: ingestion_coal.py
+          handler: ingestion_coal.lambda_handler
+          prefix: bronze/energy/coal
+          api_key: FRED_API_KEY
 
-          - dataset: oil
-            lambda: ingestion-oil
-            script: ingestion_oil.py
-            prefix: bronze/energy/brent
-            api_key: EIA_API_KEY
+        - dataset: cement
+          lambda: ingestion-cement
+          script: ingestion_cement.py
+          handler: ingestion_cement.lambda_handler
+          prefix: bronze/construction/cement
+          api_key: FRED_API_KEY
 
-    if: github.event.inputs.target == 'all' || github.event.inputs.target == matrix.dataset
+        - dataset: oil
+          lambda: ingestion-oil
+          script: ingestion_oil.py
+          handler: ingestion_oil.lambda_handler
+          prefix: bronze/energy/brent
+          api_key: EIA_API_KEY
+          
+      if: github.event.inputs.target == 'all' || github.event.inputs.target == matrix.dataset
 
     permissions:
       id-token: write
@@ -72,7 +76,7 @@ jobs:
         run: |
           aws lambda update-function-configuration \
             --function-name ${{ matrix.lambda }} \
-            --handler ${{ matrix.script%.py }}.lambda_handler \
+            --handler ${{ matrix.handler }}.lambda_handler \
             --runtime python3.12 \
             --timeout 300 \
             --memory-size 256 \

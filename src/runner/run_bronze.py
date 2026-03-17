@@ -1,7 +1,11 @@
 import duckdb
 import pathlib
 
-con = duckdb.connect("md:?token={MD_TOKEN}")
+token = os.environ["MD_TOKEN"]
+
+con = duckdb.connect(
+    f"md:my_db?motherduck_token={token}"
+)
 
 ddl_dir = pathlib.Path("sql/ddl")
 transform_dir = pathlib.Path("sql/transform")

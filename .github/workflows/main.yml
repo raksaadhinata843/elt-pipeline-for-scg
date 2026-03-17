@@ -72,6 +72,11 @@ jobs:
             --function-name ${{ matrix.lambda }} \
             --zip-file fileb://lambda.zip --no-cli-pager
 
+      - name: Wait for Lambda update
+        run: |
+         aws lambda wait function-updated \
+         --function-name ${{ matrix.lambda }}
+
       - name: Update Lambda config
         run: |
           aws lambda update-function-configuration \

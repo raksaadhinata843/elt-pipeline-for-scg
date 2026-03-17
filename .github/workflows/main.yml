@@ -38,7 +38,7 @@ jobs:
           prefix: bronze/energy/brent
           api_key: EIA_API_KEY
           
-      if: github.event.inputs.target == 'all' || github.event.inputs.target == matrix.dataset
+          if: github.event.inputs.target == 'all' || github.event.inputs.target == matrix.dataset
 
     permissions:
       id-token: write

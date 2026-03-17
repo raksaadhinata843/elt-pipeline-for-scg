@@ -1,5 +1,6 @@
 import duckdb
 import pathlib
+import os
 
 token = os.environ["MD_TOKEN"]
 

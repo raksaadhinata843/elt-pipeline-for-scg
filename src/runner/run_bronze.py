@@ -1,7 +1,7 @@
 import duckdb
 import pathlib
 
-con = duckdb.connect("md:commodity_pipeline")
+con = duckdb.connect("md:?token={MD_TOKEN}")
 
 ddl_dir = pathlib.Path("sql/ddl")
 transform_dir = pathlib.Path("sql/transform")

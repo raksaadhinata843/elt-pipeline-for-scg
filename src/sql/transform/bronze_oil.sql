@@ -6,5 +6,5 @@ INSERT INTO bronze_oil_price
         series,
         CURRENT_TIMESTAMP         AS ingestion_timestamp
    FROM read_parquet(
-    's3://scg-energy-analytics-data/bronze/energy/brent/year=2026/month=03/day=14/20260314T210045Z.parquet'
+    's3://scg-energy-analytics-data/bronze/energy/coal/year=2026/month=03/day=17/20260317T162410Z.parquet'
     );

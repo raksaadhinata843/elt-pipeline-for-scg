@@ -63,7 +63,7 @@ def lambda_handler(event: dict, context) -> dict:
         index=False
     )
     
-    logger.info(f"Uploaded to s3://{bucket}/{s3_key}")
+    logger.info(f"Uploaded to {s3_key}")
 
     return {
         "statusCode": 200,

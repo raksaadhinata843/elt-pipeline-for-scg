@@ -1,5 +1,4 @@
-MERGE INTO bronze_coal_price AS target
-USING (
+INSERT INTO bronze_coal_price
     SELECT
         CAST(date AS DATE) AS observation_date,
         CAST(value AS DOUBLE) AS price
@@ -9,8 +8,6 @@ USING (
     FROM read_parquet(
     's3://scg-energy-analytics-data/bronze/energy/coal/year=2026/month=03/day=13/20260313T201006Z.parquet'
     )
-
-) AS source
 
 ON target.observation_date = source.observation_date
 

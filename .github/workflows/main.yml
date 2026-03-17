@@ -9,18 +9,42 @@ on:
         default: "all"
 
 jobs:
-  deploy-coal:
-    if: github.event.inputs.target == 'coal' || github.event.inputs.target == 'all'
+
+  ingestion:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - dataset: coal
+            lambda: ingestion-coal
+            script: ingestion_coal.py
+            prefix: bronze/energy/coal
+            api_key: FRED_API_KEY
+
+          - dataset: cement
+            lambda: ingestion-cement
+            script: ingestion_cement.py
+            prefix: bronze/construction/cement
+            api_key: FRED_API_KEY
+
+          - dataset: oil
+            lambda: ingestion-oil
+            script: ingestion_oil.py
+            prefix: bronze/energy/brent
+            api_key: EIA_API_KEY
+
+    if: github.event.inputs.target == 'all' || github.event.inputs.target == matrix.dataset
+
     permissions:
       id-token: write
       contents: read
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
@@ -28,8 +52,8 @@ jobs:
         run: |
           mkdir package
           pip install -r src/pipeline/requirements.txt -t package/
-          cp src/pipeline/ingestion_coal.py package/
-          cd package && zip -r ../coal.zip .
+          cp src/pipeline/${{ matrix.script }} package/
+          cd package && zip -r ../lambda.zip .
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -38,148 +62,51 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Verify AWS credentials
-        run: aws sts get-caller-identity
-
       - name: Update Lambda code
         run: |
           aws lambda update-function-code \
-            --function-name ingestion-coal \
-            --zip-file fileb://coal.zip --no-cli-pager
-          aws lambda wait function-updated --function-name ingestion-coal
+            --function-name ${{ matrix.lambda }} \
+            --zip-file fileb://lambda.zip --no-cli-pager
 
       - name: Update Lambda config
         run: |
           aws lambda update-function-configuration \
-            --function-name ingestion-coal \
-            --handler ingestion_coal.lambda_handler \
+            --function-name ${{ matrix.lambda }} \
+            --handler ${{ matrix.script%.py }}.lambda_handler \
             --runtime python3.12 \
-            --timeout 300 --memory-size 256 \
-            --environment "Variables={FRED_API_KEY=${{ secrets.FRED_API_KEY }},S3_BUCKET=${{ secrets.S3_BUCKET }},S3_PREFIX=bronze/energy/coal,LOOKBACK_DAYS=30}" \
+            --timeout 300 \
+            --memory-size 256 \
+            --environment "Variables={${{ matrix.api_key }}=${{ secrets[matrix.api_key] }},S3_BUCKET=${{ secrets.S3_BUCKET }},S3_PREFIX=${{ matrix.prefix }}}" \
             --no-cli-pager
 
       - name: Invoke Lambda
         run: |
           aws lambda invoke \
-            --function-name ingestion-coal \
+            --function-name ${{ matrix.lambda }} \
             --payload '{}' response.json
           cat response.json
 
-  deploy-cement:
-    if: github.event.inputs.target == 'cement' || github.event.inputs.target == 'all'
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+  bronze-transform:
+
+    needs: ingestion
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Package Lambda
+      - name: Install deps
         run: |
-          mkdir package
-          pip install -r src/pipeline/requirements.txt -t package/
-          cp src/pipeline/ingestion_cement.py package/
-          cd package && zip -r ../cement.zip .
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Verify AWS credentials
-        run: aws sts get-caller-identity
-
-      - name: Update Lambda code
-        run: |
-          aws lambda update-function-code \
-            --function-name ingestion-cement \
-            --zip-file fileb://cement.zip --no-cli-pager
-          aws lambda wait function-updated --function-name ingestion-cement
-
-      - name: Update Lambda config
-        run: |
-          aws lambda update-function-configuration \
-            --function-name ingestion-cement \
-            --handler ingestion_cement.lambda_handler \
-            --runtime python3.12 \
-            --timeout 300 --memory-size 256 \
-            --environment "Variables={FRED_API_KEY=${{ secrets.FRED_API_KEY }},S3_BUCKET=${{ secrets.S3_BUCKET }},S3_PREFIX=bronze/construction/cement}" \
-            --no-cli-pager
-
-      - name: Invoke Lambda
-        run: |
-          aws lambda invoke \
-            --function-name ingestion-cement \
-            --payload '{}' response.json
-          cat response.json
-
-  deploy-oil:
-    if: github.event.inputs.target == 'oil' || github.event.inputs.target == 'all'
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Package Lambda
-        run: |
-          mkdir package
-          pip install -r src/pipeline/requirements.txt -t package/
-          cp src/pipeline/ingestion_oil.py package/
-          cd package && zip -r ../oil.zip .
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Verify AWS credentials
-        run: aws sts get-caller-identity
-
-      - name: Update Lambda code
-        run: |
-          aws lambda update-function-code \
-            --function-name ingestion-oil \
-            --zip-file fileb://oil.zip --no-cli-pager
-          aws lambda wait function-updated --function-name ingestion-oil
-
-      - name: Update Lambda config
-        run: |
-          aws lambda update-function-configuration \
-            --function-name ingestion-oil \
-            --handler ingestion_oil.lambda_handler \
-            --runtime python3.12 \
-            --timeout 300 --memory-size 256 \
-            --environment "Variables={EIA_API_KEY=${{ secrets.EIA_API_KEY }},S3_BUCKET=${{ secrets.S3_BUCKET }},S3_PREFIX=bronze/energy/brent,EIA_FREQUENCY=daily,LOOKBACK_DAYS=30,FULL_LOAD=false}" \
-            --no-cli-pager
-
-      - name: Invoke Lambda
-        run: |
-          aws lambda invoke \
-            --function-name ingestion-oil \
-            --payload '{}' response.json
-          cat response.json
+          pip install duckdb
+          pip install motherduck
 
       - name: Run Bronze Transform
         env:
-          token: ${{ secrets.MD_TOKEN }}
+          MOTHERDUCK_TOKEN: ${{ secrets.MD_TOKEN }}
         run: |
           python src/runner/run_bronze.py
-      

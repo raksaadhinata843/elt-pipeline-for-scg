@@ -13,8 +13,6 @@ logger.setLevel(logging.INFO)
 FRED_BASE_URL = "https://api.stlouisfed.org/fred/series/observations"
 
 
-
-
 def fetch_coal_newcastle(api_key: str, start_date: str = None, end_date: str = None) -> dict:
 
     params = {

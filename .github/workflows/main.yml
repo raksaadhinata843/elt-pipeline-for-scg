@@ -114,8 +114,8 @@ jobs:
           pip install duckdb==1.4.4
           pip install motherduck
 
-      - name: Run Bronze Transform
-        env:
-          MD_TOKEN: ${{ secrets.MD_TOKEN }}
-        run: |
-          python src/runner/run_bronze.py
+     # - name: Run Bronze Transform
+        #env:
+          #MD_TOKEN: ${{ secrets.MD_TOKEN }}
+        #run: |
+          #python src/runner/run_bronze.py

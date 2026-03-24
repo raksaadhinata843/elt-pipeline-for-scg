@@ -48,9 +48,6 @@ def lambda_handler(event: dict, context) -> dict:
         if obs["value"] != "."
     ]
 
-    # Dump raw response as-is ke S3
-    timestamp = now.strftime("%Y%m%dT%H%M%SZ")
-
     s3_key = (
         f"s3://{bucket}/{prefix}/"
         f"year={now.year}/month={now.month:02d}/day={now.day:02d}/"

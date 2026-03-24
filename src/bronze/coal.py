@@ -53,21 +53,17 @@ def lambda_handler(event: dict, context) -> dict:
         if obs["value"] != "."
     ]
 
-
-
     s3_key = (
         f"s3://{bucket}/{prefix}/"
         f"year={now.year}/month={now.month:02d}/day={now.day:02d}/"
         f"bronze_coal.parquet"
     )
 
-
     wr.s3.to_parquet(
         df=df,
         path=s3_key,
         index=False
     )
-
 
     logger.info(f"Uploaded to {s3_key}")
 

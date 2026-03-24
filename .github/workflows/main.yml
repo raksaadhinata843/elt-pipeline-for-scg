@@ -81,7 +81,7 @@ jobs:
         run: |
           aws lambda update-function-configuration \
             --function-name ${{ matrix.lambda }} \
-            --handler ${{ matrix.handler }}.lambda_handler \
+            --handler ${{ matrix.handler }} \
             --runtime python3.12 \
             --timeout 300 \
             --memory-size 256 \

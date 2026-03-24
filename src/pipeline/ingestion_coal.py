@@ -54,7 +54,7 @@ def lambda_handler(event: dict, context) -> dict:
     s3_key = (
         f"s3://{bucket}/{prefix}/"
         f"year={now.year}/month={now.month:02d}/day={now.day:02d}/"
-        f"{timestamp}.parquet"
+        f"bronze_coal.parquet"
     )
 
     wr.s3.to_parquet(

@@ -55,8 +55,8 @@ jobs:
       - name: Package Lambda
         run: |
           mkdir package
-          pip install -r src/pipeline/requirements.txt -t package/
-          cp src/pipeline/${{ matrix.script }} package/
+          pip install -r requests==2.31.0 -t package/
+          cp src/bronze/${{ matrix.script }} package/
           cd package && zip -r ../lambda.zip .
 
       - name: Configure AWS credentials

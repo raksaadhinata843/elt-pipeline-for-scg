@@ -113,12 +113,10 @@ jobs:
 
       - name: Install DuckDB CLI
         run: |
-          # Harus link lengkap sampai ada tulisan .zip nya
-          wget https://github.com
-          
+
+          wget https://github.com/duckdb/duckdb/releases/latest/download/duckdb_cli-linux-amd64.zip
           # Cek apakah filenya beneran ada (buat debug)
           ls -l
-          
           unzip duckdb_cli-linux-amd64.zip
           chmod +x ./duckdb
 

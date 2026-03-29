@@ -100,6 +100,8 @@ jobs:
 
     needs: ingestion
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
 
@@ -109,13 +111,26 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install deps
+      - name: Install DuckDB CLI
         run: |
-          pip install duckdb==1.4.4
-          pip install motherduck
+          wget https://github.com
+          unzip duckdb_cli-linux-amd64.zip
+          chmod +x ./duckdb
 
-     # - name: Run Bronze Transform
-        #env:
-          #MD_TOKEN: ${{ secrets.MD_TOKEN }}
-        #run: |
-          #python src/runner/run_bronze.py
+      - name: Run Transform & Profile
+        env:
+          motherduck_token: ${{ secrets.MD_TOKEN }}
+        run: |
+          # 1. Profiling Data
+          for file in src/silver/profiling_data/*.sql; do
+            ./duckdb md:my_db < "$file"
+          done
+          
+          # 2. Jalankan Transformasi
+          for file in src/silver/ddl/*.sql; do
+            ./duckdb md:my_db < "$file"
+          done
+          
+          # 3. Generate Report ke Markdown dari file
+          ./duckdb md:my_db -md < src/silver/final_check_quality.sql > PROFILE_REPORT.md
+

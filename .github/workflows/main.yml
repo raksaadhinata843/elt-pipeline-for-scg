@@ -114,6 +114,7 @@ jobs:
       - name: Install DuckDB CLI
         run: |
           wget https://github.com
+          ls -l
           unzip duckdb_cli-linux-amd64.zip
           chmod +x ./duckdb
 

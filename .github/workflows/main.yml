@@ -136,7 +136,7 @@ jobs:
           done
           
           # 3. Generate Report ke Markdown dari file
-          ./duckdb md:my_db -md < src/silver/final_check_quality.sql > PROFILE_REPORT.md
+          ./duckdb md:my_db -markdown < src/silver/final_check_quality.sql > PROFILE_REPORT.md
           for file in src/silver/final_check_quality.sql; do
             ./duckdb md:my_db < "$file"
           done

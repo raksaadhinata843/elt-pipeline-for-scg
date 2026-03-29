@@ -3,4 +3,4 @@ SELECT
   period AS date,
   value AS oil_price
 FROM bronze_oil
-qualify row_number() over (PARTITION BY period ORDER BY period DESC) = 1;
+QUALIFY row_number() OVER (PARTITION BY period ORDER BY period DESC) = 1;

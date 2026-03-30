@@ -141,3 +141,28 @@ jobs:
             ./duckdb md:my_db < "$file"
           done
 
+
+      - name: Run Logic Bussiness
+        env:
+          motherduck_token: ${{ secrets.MD_TOKEN }}
+        run: |
+          # 1. Unified Data
+          for file in src/gold/unified.sql; do
+            ./duckdb md:my_db < "$file"
+          done
+
+          # 2. Indexed 
+          for file in src/gold/indexed.sql; do
+            ./duckdb md:my_db < "$file"
+          done
+
+          # 3. Gap Cost & Profit
+          for file in src/gold/gap.sql; do
+            ./duckdb md:my_db < "$file"
+          done
+
+          # 4. Lag Effect
+          for file in src/gold/lag.sql; do
+            ./duckdb md:my_db < "$file"
+          done
+

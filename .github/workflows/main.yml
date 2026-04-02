@@ -188,18 +188,19 @@ jobs:
             ./duckdb md:my_db < "$file"
           done
 
-     - name: Run Transformation & Docs 
-          env: motherduck_token: ${{ secrets.MOTHERDUCK_TOKEN }} 
-        run: | # Jalankan transformasi (opsional kalau lo mau satu flow) 
-        ./duckdb -c "INSTALL motherduck; LOAD motherduck; SET motherduck_token='$motherduck_token';" < scripts/transform.sql # Jalankan dokumentasi otomatis dan simpan ke file Markdown echo "# Data Documentation (Auto-Generated)" > DATA_DOCS.md 
-        ./duckdb -c "INSTALL motherduck; LOAD motherduck; SET motherduck_token='$motherduck_token';" < scripts/generate_docs.sql >> DATA_DOCS.md 
+      - name: Run Docs 
+        env: 
+          motherduck_token: ${{ secrets.MD_TOKEN }} 
+        run: |
+
+            ./duckdb -c "INSTALL motherduck; LOAD motherduck; SET motherduck_token='$motherduck_token';" < scripts/generate_docs.sql >> DATA_DOCS.md 
         
-    - name: Commit & Push Documentation 
+      - name: Commit & Push Documentation 
     
-      run: | 
-      git config --global user.name "DE-Bot" 
-      git config --global user.email "bot@github.com" 
-      git add DATA_DOCS.md # Biar gak loop action terus-menerus, kasih [skip ci] 
-      git commit -m "docs: update data dictionary [skip ci]" || echo "No changes to commit" 
-      git push
+        run: | 
+          git config --global user.name "DE-Bot" 
+          git config --global user.email "bot@github.com" 
+          git add DATA_DOCS.md # Biar gak loop action terus-menerus, kasih [skip ci] 
+          git commit -m "docs: update data dictionary [skip ci]" || echo "No changes to commit" 
+          git push
 

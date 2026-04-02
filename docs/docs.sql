@@ -1,3 +1,6 @@
+.mode markdown
+.output DATA_DOCS.md
+
 -- Pindah ke database MotherDuck
 ATTACH 'md:my_db';
 
@@ -9,3 +12,4 @@ DESCRIBE my_db.gold_unified;
 PRINT '### Statistik Data';
 SUMMARIZE my_db.gold_unified;
 
+.output

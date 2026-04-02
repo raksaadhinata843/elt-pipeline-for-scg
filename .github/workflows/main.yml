@@ -193,7 +193,7 @@ jobs:
           motherduck_token: ${{ secrets.MD_TOKEN }} 
         run: |
 
-            ./duckdb -c "INSTALL motherduck; LOAD motherduck; SET motherduck_token='$motherduck_token';" < scripts/generate_docs.sql >> DATA_DOCS.md 
+            ./duckdb -c "INSTALL motherduck; LOAD motherduck; SET motherduck_token='$motherduck_token';" < docs/docs.sql >> DATA_DOCS.md 
         
       - name: Commit & Push Documentation 
     

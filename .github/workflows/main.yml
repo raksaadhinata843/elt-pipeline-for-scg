@@ -195,7 +195,7 @@ jobs:
           echo "# Data Dictionary - Updated: $(date)" > DATA_DOCS.md
           
           # Pakai single '>' buat overwrite file lama.
-          ./duckdb -c "INSTALL motherduck; LOAD motherduck;" < docs/docs.sql >> DATA_DOCS.md
+          ./duckdb -c "INSTALL motherduck; LOAD motherduck;" < docs/docs.sql
         
       - name: Commit & Push Documentation
         run: |

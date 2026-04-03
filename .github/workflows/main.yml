@@ -188,19 +188,20 @@ jobs:
             ./duckdb md:my_db < "$file"
           done
 
-      - name: Run Docs 
-        env: 
+      - name: Run Docs
+        env:
           motherduck_token: ${{ secrets.MD_TOKEN }} 
         run: |
-
-            ./duckdb -c "INSTALL motherduck; LOAD motherduck; SET motherduck_token='$motherduck_token';" < docs/docs.sql >> DATA_DOCS.md 
+          echo "# Data Dictionary - Updated: $(date)" > DATA_DOCS.md
+          
+          # Pakai single '>' buat overwrite file lama.
+          ./duckdb -c "INSTALL motherduck; LOAD motherduck;" < docs/docs.sql >> DATA_DOCS.md
         
-      - name: Commit & Push Documentation 
-    
-        run: | 
-          git config --global user.name "DE-Bot" 
-          git config --global user.email "bot@github.com" 
-          git add DATA_DOCS.md # Biar gak loop action terus-menerus, kasih [skip ci] 
-          git commit -m "docs: update data dictionary [skip ci]" || echo "No changes to commit" 
+      - name: Commit & Push Documentation
+        run: |
+          git config --global user.name "DE-Bot"
+          git config --global user.email "bot@github.com"
+          git add DATA_DOCS.md
+          git commit -m "docs: update data dictionary [skip ci]" || echo "No changes to commit"
           git push
 

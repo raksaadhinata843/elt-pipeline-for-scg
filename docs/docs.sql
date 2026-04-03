@@ -1,15 +1,22 @@
-.mode markdown
 .output DATA_DOCS.md
 
--- Pindah ke database MotherDuck
 ATTACH 'md:my_db';
 
--- Generate tabel
-PRINT '### Tabel Gabungan (Cement, Coal, Oil)';
+-- Header Utama
+.print '# Data Documentation (Medallion - Gold Layer)'
+.print 'Last Updated: '
+SELECT now();
+
+-- Tabel Schema
+.print ''
+.print '### Tabel Gabungan (Cement, Coal, Oil)'
+.mode markdown
 DESCRIBE my_db.gold_unified;
 
--- Generate statistik data 
-PRINT '### Statistik Data';
+-- Print Statistik
+.print ''
+.print '### Statistik Data'
+.mode markdown
 SUMMARIZE my_db.gold_unified;
 
 .output

@@ -22,9 +22,9 @@ SELECT
     u.cement_price,
     u.coal_price,
     u.oil_price,
-    -- Rumus Indexing
-    (u.cement_price / b.base_cement) * 100 as cement_idx,
-    (u.coal_price / b.base_coal) * 100 as coal_idx,
-    (u.oil_price / b.base_oil) * 100 as oil_idx
+    -- Rumus Indexing with NULL safety checks
+    CASE WHEN b.base_cement IS NOT NULL THEN (u.cement_price / b.base_cement) * 100 ELSE NULL END as cement_idx,
+    CASE WHEN b.base_coal IS NOT NULL THEN (u.coal_price / b.base_coal) * 100 ELSE NULL END as coal_idx,
+    CASE WHEN b.base_oil IS NOT NULL THEN (u.oil_price / b.base_oil) * 100 ELSE NULL END as oil_idx
 FROM UniqueUnified u, BasePrices b
 ORDER BY u.obs_month ASC;

@@ -8,5 +8,5 @@ SELECT
 FROM silver_cement c
 INNER JOIN silver_coal co ON DATE_TRUNC('month', c.date) = DATE_TRUNC('month', co.date)
 INNER JOIN silver_oil o ON DATE_TRUNC('month', c.date) = DATE_TRUNC('month', o.date)
-WHERE C.DATE  >= '2010-01-01'
+WHERE c.date >= '2010-01-01'
 ORDER BY obs_month;

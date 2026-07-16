@@ -44,14 +44,15 @@ def lambda_handler(event: dict, context) -> dict:
 
     logger.info(f"Fetching Coal Newcastle")
 
-    df = pd.DataFrame(raw["observations"])
-    df["value"] = pd.to_numeric(df["value"], errors='coerce')
-    df["date"] = pd.to_datetime(df["date"])
-
+    # Filter invalid observations BEFORE creating DataFrame
     raw["observations"] = [
         obs for obs in raw["observations"] 
         if obs["value"] != "."
     ]
+
+    df = pd.DataFrame(raw["observations"])
+    df["value"] = pd.to_numeric(df["value"], errors='coerce')
+    df["date"] = pd.to_datetime(df["date"])
 
     s3_key = (
         f"s3://{bucket}/{prefix}/"
@@ -71,50 +72,3 @@ def lambda_handler(event: dict, context) -> dict:
         "statusCode": 200,
         "s3_uri":     f"s3://{bucket}/{s3_key}",
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

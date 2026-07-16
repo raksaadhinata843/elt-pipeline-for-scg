@@ -13,10 +13,12 @@ SERIES_ID     = "PCU32733273"
 
 def fetch_cement_price(api_key: str, start_date: str | None, end_date: str | None) -> dict:
     params = {
-        "api_key":       api_key,
-        "series_id":     SERIES_ID,
-        "file_type":     "json",
-        "sort_order":    "asc",
+        "api_key":           api_key,
+        "series_id":         SERIES_ID,
+        "file_type":         "json",
+        "sort_order":        "asc",
+        "observation_start": start_date,
+        "observation_end":   end_date,
     }
 
     response = requests.get(FRED_BASE_URL, params=params, timeout=30)
@@ -56,5 +58,5 @@ def lambda_handler(event: dict, context) -> dict:
 
     return {
         "statusCode": 200,
-        "s3_uri":     f"s3://{bucket}/{s3_key}"
+        "s3_uri": f"s3://{bucket}/{s3_key}",
     }

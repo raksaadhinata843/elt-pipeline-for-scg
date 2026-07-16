@@ -36,8 +36,13 @@ def lambda_handler(event: dict, context) -> dict:
     now = datetime.now(timezone.utc)
     raw = fetch_cement_price(api_key, "2010-01-01", now.strftime("%Y-%m-%d"))
 
+    raw["observations"] = [
+        obs for obs in raw["observations"]
+        if obs["value"] != "."
+    ]
+
     df = pd.DataFrame(raw["observations"])
-    df["value"] = pd.to_numeric(df["value"], errors='coerce')
+    df["value"] = pd.to_numeric(df["value"], errors='raise')
     df["date"] = pd.to_datetime(df["date"])
     
     logger.info(f"Fetching FRED Cement Price")

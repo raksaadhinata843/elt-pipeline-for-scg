@@ -48,7 +48,7 @@ def lambda_handler(event, context):
     bucket    = os.environ["S3_BUCKET"]
     prefix    = os.environ.get("S3_PREFIX", "bronze/energy/brent")
     frequency = os.environ.get("EIA_FREQUENCY", "daily")
-    full_load = os.environ.get("FULL_LOAD", True)
+    full_load = os.environ.get("FULL_LOAD", "true").lower() == "true"
 
     now = datetime.now(timezone.utc)         
     start_date = "2010-01-01"
@@ -60,11 +60,8 @@ def lambda_handler(event, context):
         return {"statusCode": 200, "body": "No data returned from API"}
 
     df = pd.DataFrame(raw)
-    df["value"] = pd.to_numeric(df["value"], errors='coerce')
+    df["value"] = pd.to_numeric(df["value"], errors='raise')
     df["date"] = pd.to_datetime(df["period"])
-    
-    # Filter out rows with NaN values to ensure data quality
-    df = df.dropna(subset=["value", "date"])
 
     s3_key = (
         f"s3://{bucket}/{prefix}/"

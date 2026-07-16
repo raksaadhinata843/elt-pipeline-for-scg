@@ -1,0 +1,16 @@
+{
+  "name": "scg-dashboard",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite"
+  },
+  "dependencies": {
+    "@duckdb/duckdb-wasm": "^1.33.1-dev57.0",
+    "chart.js": "^4.5.1"
+  },
+  "devDependencies": {
+    "vite": "^5.4.21"
+  }
+}

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SCG Commodity Dashboard</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div>
+        <h1>SCG Commodity Dashboard</h1>
+        <p class="subtitle">Cement · Coal · Oil — Monthly Price Index (Base 100 = Jan 2010)</p>
+      </div>
+      <div id="status-badge" class="badge loading">Connecting…</div>
+    </div>
+  </header>
+
+  <main>
+    <section class="stats" id="stats">
+      <div class="stat-card">
+        <span class="stat-label">Cement Index</span>
+        <span class="stat-value" id="val-cement">—</span>
+        <span class="stat-sub" id="sub-cement"></span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Coal Index</span>
+        <span class="stat-value" id="val-coal">—</span>
+        <span class="stat-sub" id="sub-coal"></span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Oil Index</span>
+        <span class="stat-value" id="val-oil">—</span>
+        <span class="stat-sub" id="sub-oil"></span>
+      </div>
+      <div class="stat-card accent">
+        <span class="stat-label">Total Energy Gap</span>
+        <span class="stat-value" id="val-gap">—</span>
+        <span class="stat-sub" id="sub-gap">cement vs avg energy</span>
+      </div>
+    </section>
+
+    <section class="charts">
+      <div class="chart-card">
+        <h2>Price Index Over Time</h2>
+        <p class="chart-desc">Normalized to Jan 2010 = 100. Shows how each commodity has moved relative to its starting price.</p>
+        <div class="canvas-wrap"><canvas id="indexChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h2>Energy Gap vs Cement Demand</h2>
+        <p class="chart-desc">Positive values mean cement prices are outpacing energy costs; negative means energy is squeezing margins.</p>
+        <div class="canvas-wrap"><canvas id="gapChart"></canvas></div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

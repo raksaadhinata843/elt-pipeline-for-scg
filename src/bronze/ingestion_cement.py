@@ -56,5 +56,5 @@ def lambda_handler(event: dict, context) -> dict:
 
     return {
         "statusCode": 200,
-        "s3_uri":     f"s3://{bucket}/{s3_key}",
-  }
+        "s3_uri":     f"s3://{bucket}/{s3_key}"
+    }

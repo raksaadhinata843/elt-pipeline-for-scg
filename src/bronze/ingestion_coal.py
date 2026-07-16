@@ -44,7 +44,6 @@ def lambda_handler(event: dict, context) -> dict:
 
     logger.info(f"Fetching Coal Newcastle")
 
-    # Filter invalid observations BEFORE creating DataFrame
     raw["observations"] = [
         obs for obs in raw["observations"] 
         if obs["value"] != "."

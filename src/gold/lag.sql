@@ -3,6 +3,8 @@ SELECT * FROM (
   SELECT 
         obs_month,
         cement_idx,
+        coal_idx,
+        oil_idx,
         -- Lag Batubara
         LAG(coal_idx, 1) OVER(ORDER BY obs_month) AS coal_lag1,
         LAG(coal_idx, 2) OVER(ORDER BY obs_month) AS coal_lag2,

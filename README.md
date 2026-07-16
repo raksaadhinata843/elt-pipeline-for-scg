@@ -1,4 +1,4 @@
-# ELT Pipeline for SCG (Semen Coba Grafis)
+# ELT Pipeline for SCG
 
 An automated Extract-Load-Transform (ELT) data pipeline that ingests commodity prices (cement, coal, and oil) from public APIs, stages them through a medallion architecture (Bronze/Silver/Gold), and generates energy-to-cement correlation analysis for supply chain insights.
 

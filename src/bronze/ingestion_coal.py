@@ -50,7 +50,7 @@ def lambda_handler(event: dict, context) -> dict:
     ]
 
     df = pd.DataFrame(raw["observations"])
-    df["value"] = pd.to_numeric(df["value"], errors='coerce')
+    df["value"] = pd.to_numeric(df["value"], errors='raise')
     df["date"] = pd.to_datetime(df["date"])
 
     s3_key = (

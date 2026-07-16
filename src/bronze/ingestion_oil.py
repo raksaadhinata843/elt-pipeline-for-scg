@@ -59,10 +59,12 @@ def lambda_handler(event, context):
         print("API returned empty response")
         return {"statusCode": 200, "body": "No data returned from API"}
 
-
     df = pd.DataFrame(raw)
     df["value"] = pd.to_numeric(df["value"], errors='coerce')
     df["date"] = pd.to_datetime(df["period"])
+    
+    # Filter out rows with NaN values to ensure data quality
+    df = df.dropna(subset=["value", "date"])
 
     s3_key = (
         f"s3://{bucket}/{prefix}/"
@@ -78,4 +80,4 @@ def lambda_handler(event, context):
   
     logger.info(f"Uploaded to {s3_key}")
     
-    return {"statusCode": 200, "records": len(raw), "s3_key": s3_key}
+    return {"statusCode": 200, "records": len(df), "s3_key": s3_key}

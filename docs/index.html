@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SCG Commodity Dashboard</title>
+
+  <!--
+    Cross-origin isolation via service worker.
+    GitHub Pages doesn't send COOP/COEP headers, but DuckDB WASM needs
+    SharedArrayBuffer. The service worker injects those headers locally.
+    On first visit the page reloads once after the SW activates.
+  -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./coi-serviceworker.js').then(() => {
+        if (!self.crossOriginIsolated) location.reload();
+      });
+    }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg       : #0f1117;
+      --surface  : #181b25;
+      --border   : #2a2d3e;
+      --text     : #e0e0e0;
+      --muted    : #888;
+      --accent   : #6c63ff;
+      --ok       : #4caf82;
+      --warn     : #e8a838;
+      --danger   : #e05c5c;
+      --r        : 10px;
+    }
+    html, body {
+      background: var(--bg); color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 14px; line-height: 1.6; min-height: 100vh;
+    }
+
+    /* ── Token gate ─────────────────────────────────────────────── */
+    #gate {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 100vh; gap: 20px; padding: 24px;
+    }
+    #gate h1 { font-size: 1.4rem; font-weight: 700; }
+    #gate p  { color: var(--muted); max-width: 400px; text-align: center; }
+    .token-form {
+      display: flex; gap: 8px; width: 100%; max-width: 480px; flex-wrap: wrap;
+    }
+    .token-form input {
+      flex: 1; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); padding: 10px 14px;
+      font-size: 0.9rem; outline: none; min-width: 0;
+    }
+    .token-form input:focus { border-color: var(--accent); }
+    .token-form button, .btn {
+      background: var(--accent); border: none; border-radius: 8px;
+      color: #fff; cursor: pointer; font-size: 0.9rem; font-weight: 600;
+      padding: 10px 20px; white-space: nowrap;
+    }
+    .btn-sm {
+      background: transparent; border: 1px solid var(--border);
+      border-radius: 6px; color: var(--muted); cursor: pointer;
+      font-size: 0.72rem; padding: 4px 10px;
+    }
+    .btn-sm:hover { border-color: var(--danger); color: var(--danger); }
+    #gate-error { color: var(--danger); font-size: 0.8rem; }
+
+    /* ── Header ─────────────────────────────────────────────────── */
+    header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+    }
+    .header-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      max-width: 1280px; margin: 0 auto; gap: 12px;
+    }
+    h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.02em; }
+    .subtitle { color: var(--muted); font-size: 0.78rem; margin-top: 2px; }
+    .badge {
+      font-size: 0.72rem; font-weight: 600; padding: 4px 12px;
+      border-radius: 20px; border: 1px solid; white-space: nowrap;
+    }
+    .badge.loading { color: var(--warn);   border-color: var(--warn);   background: rgba(232,168,56,.08);  }
+    .badge.ok      { color: var(--ok);     border-color: var(--ok);     background: rgba(76,175,130,.08);  }
+    .badge.error   { color: var(--danger); border-color: var(--danger); background: rgba(224,92,92,.08);   }
+
+    /* ── Layout ─────────────────────────────────────────────────── */
+    main {
+      max-width: 1280px; margin: 0 auto; padding: 28px;
+      display: flex; flex-direction: column; gap: 28px;
+    }
+    .stats {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;
+    }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 20px 22px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .stat-card.accent { border-color: rgba(108,99,255,.4); background: rgba(108,99,255,.06); }
+    .stat-label { font-size: 0.7rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
+    .stat-value { font-size: 2rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; }
+    .stat-sub   { font-size: 0.75rem; color: var(--muted); }
+    .charts {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+    }
+    @media (max-width: 860px) { .charts { grid-template-columns: 1fr; } }
+    .chart-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 24px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .chart-card h2  { font-size: 0.95rem; font-weight: 700; }
+    .chart-desc     { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+    .canvas-wrap    { position: relative; height: 300px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+
+<!-- ── Token gate (shown before connecting) ──────────────────────────── -->
+<div id="gate">
+  <h1>SCG Commodity Dashboard</h1>
+  <p>Enter your MotherDuck token to connect. It will be saved in this browser only.</p>
+  <div class="token-form">
+    <input id="token-input" type="password"
+           placeholder="motherduck_token_xxxxxxxxxxxxxxxx" autocomplete="off" />
+    <button onclick="startWithToken()">Connect</button>
+  </div>
+  <span id="gate-error"></span>
+</div>
+
+<!-- ── Dashboard (hidden until connected) ────────────────────────────── -->
+<div id="app" style="display:none;">
+  <header>
+    <div class="header-inner">
+      <div>
+        <h1>SCG Commodity Dashboard</h1>
+        <p class="subtitle">Cement · Coal · Oil — Monthly Price Index (Base 100 = Jan 2010)</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div id="status-badge" class="badge loading">Connecting…</div>
+        <button class="btn-sm" onclick="disconnect()">Disconnect</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="stats">
+      <div class="stat-card">
+        <span class="stat-label">Cement Index</span>
+        <span class="stat-value" id="val-cement">—</span>
+        <span class="stat-sub"  id="sub-cement"></span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Coal Index</span>
+        <span class="stat-value" id="val-coal">—</span>
+        <span class="stat-sub"  id="sub-coal"></span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Oil Index</span>
+        <span class="stat-value" id="val-oil">—</span>
+        <span class="stat-sub"  id="sub-oil"></span>
+      </div>
+      <div class="stat-card accent">
+        <span class="stat-label">Total Energy Gap</span>
+        <span class="stat-value" id="val-gap">—</span>
+        <span class="stat-sub"  id="sub-gap">cement vs avg energy</span>
+      </div>
+    </section>
+
+    <section class="charts">
+      <div class="chart-card">
+        <h2>Price Index Over Time</h2>
+        <p class="chart-desc">Normalized to Jan 2010 = 100. Shows how each commodity has moved relative to its base price.</p>
+        <div class="canvas-wrap"><canvas id="indexChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h2>Energy Gap vs Cement Demand</h2>
+        <p class="chart-desc">Positive = cement outpaces energy costs. Negative = energy is squeezing margins.</p>
+        <div class="canvas-wrap"><canvas id="gapChart"></canvas></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script type="module">
+  import { MDConnection } from 'https://esm.sh/@motherduck/motherduck-duckdb-wasm';
+
+  const DB = 'my_db';
+  const STORAGE_KEY = 'md_token_scg';
+
+  // ── Helpers ─────────────────────────────────────────────────────────────
+  const $ = (id) => document.getElementById(id);
+
+  function setStatus(text, state = 'loading') {
+    const b = $('status-badge');
+    b.textContent = text;
+    b.className   = `badge ${state}`;
+  }
+
+  function fmtNum(n) { return n != null && !isNaN(n) ? (+n).toFixed(1) : '—'; }
+
+  function fmtMonth(val) {
+    if (val == null) return '';
+    const ms = typeof val === 'bigint' ? Number(val)
+             : typeof val === 'number' ? val
+             : new Date(val).getTime();
+    const d = new Date(ms);
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+  }
+
+  // Convert Arrow Table → plain JS array
+  function arrowToRows(table) {
+    const fields = table.schema.fields.map(f => f.name);
+    const rows = [];
+    for (let i = 0; i < table.numRows; i++) {
+      const row = {};
+      for (const name of fields) {
+        const col = table.getChild(name);
+        const v   = col ? col.get(i) : null;
+        row[name] = typeof v === 'bigint' ? Number(v) : v;
+      }
+      rows.push(row);
+    }
+    return rows;
+  }
+
+  // ── Charts ───────────────────────────────────────────────────────────────
+  const PAL = {
+    cement: { line: '#4f86c6' },
+    coal  : { line: '#e8a838' },
+    oil   : { line: '#e05c5c' },
+    total : { line: '#6c63ff' },
+  };
+
+  function ds(label, data, color) {
+    return {
+      label, data,
+      borderColor     : color.line,
+      borderWidth     : 2,
+      tension         : 0.3,
+      fill            : false,
+      pointRadius     : 0,
+      pointHoverRadius: 4,
+    };
+  }
+
+  const sharedOpts = {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend : { position: 'top', labels: { boxWidth: 12, color: '#ccc' } },
+      tooltip: { backgroundColor: 'rgba(20,22,30,.92)', titleColor: '#e0e0e0',
+                 bodyColor: '#ccc', borderColor: '#333', borderWidth: 1 },
+    },
+    scales: {
+      x: { ticks: { maxTicksLimit: 10, color: '#888' }, grid: { color: 'rgba(255,255,255,.05)' } },
+      y: { ticks: { color: '#888' },                    grid: { color: 'rgba(255,255,255,.05)' } },
+    },
+  };
+
+  // ── Main connect flow ────────────────────────────────────────────────────
+  async function runDashboard(token) {
+    $('gate').style.display = 'none';
+    $('app').style.display  = 'block';
+    setStatus('Connecting to MotherDuck…', 'loading');
+
+    try {
+      const conn = await MDConnection.create({ mdToken: token });
+      setStatus('Loading data…', 'loading');
+
+      const [idxRes, gapRes] = await Promise.all([
+        conn.evaluateQuery(`
+          SELECT obs_month, cement_idx, coal_idx, oil_idx
+          FROM ${DB}.gold_indexed ORDER BY obs_month
+        `),
+        conn.evaluateQuery(`
+          SELECT obs_month, gap_coal, gap_oil, gap_total_energy
+          FROM ${DB}.gold_gap ORDER BY obs_month
+        `),
+      ]);
+
+      const idxRows = arrowToRows(idxRes.data);
+      const gapRows = arrowToRows(gapRes.data);
+
+      // Stat cards
+      const latest    = idxRows.at(-1);
+      const latestGap = gapRows.at(-1);
+
+      $('val-cement').textContent = fmtNum(latest?.cement_idx);
+      $('val-coal'  ).textContent = fmtNum(latest?.coal_idx);
+      $('val-oil'   ).textContent = fmtNum(latest?.oil_idx);
+      $('val-gap'   ).textContent = fmtNum(latestGap?.gap_total_energy);
+
+      const mo = fmtMonth(latest?.obs_month);
+      ['sub-cement','sub-coal','sub-oil'].forEach(id => $(id).textContent = mo);
+      $('sub-gap').textContent = `as of ${mo}`;
+
+      // Price index chart
+      const labels = idxRows.map(r => fmtMonth(r.obs_month));
+      new Chart($('indexChart'), {
+        type: 'line',
+        data: { labels, datasets: [
+          ds('Cement', idxRows.map(r => r.cement_idx), PAL.cement),
+          ds('Coal',   idxRows.map(r => r.coal_idx),   PAL.coal),
+          ds('Oil',    idxRows.map(r => r.oil_idx),    PAL.oil),
+        ]},
+        options: { ...sharedOpts, scales: { ...sharedOpts.scales,
+          y: { ...sharedOpts.scales.y, title: { display: true, text: 'Index (Jan 2010 = 100)', color: '#888' } }
+        }},
+      });
+
+      // Gap chart
+      new Chart($('gapChart'), {
+        type: 'line',
+        data: { labels: gapRows.map(r => fmtMonth(r.obs_month)), datasets: [
+          ds('Coal Gap',         gapRows.map(r => r.gap_coal),         PAL.coal),
+          ds('Oil Gap',          gapRows.map(r => r.gap_oil),          PAL.oil),
+          ds('Total Energy Gap', gapRows.map(r => r.gap_total_energy), PAL.total),
+        ]},
+        options: { ...sharedOpts, scales: { ...sharedOpts.scales,
+          y: { ...sharedOpts.scales.y, title: { display: true, text: 'Index Difference', color: '#888' } }
+        }},
+      });
+
+      setStatus(`✓ ${idxRows.length} monthly records`, 'ok');
+    } catch (err) {
+      console.error(err);
+      setStatus(`Error: ${err.message}`, 'error');
+    }
+  }
+
+  // ── Token gate logic (exposed to global scope for onclick) ───────────────
+  window.startWithToken = function () {
+    const input = $('token-input').value.trim();
+    if (!input) { $('gate-error').textContent = 'Please enter a token.'; return; }
+    localStorage.setItem(STORAGE_KEY, input);
+    runDashboard(input);
+  };
+
+  window.disconnect = function () {
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  };
+
+  // Allow Enter key to submit the token
+  document.getElementById('token-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') window.startWithToken();
+  });
+
+  // Auto-connect if token already saved
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) runDashboard(saved);
+</script>
+</body>
+</html>
